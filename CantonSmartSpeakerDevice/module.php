@@ -121,64 +121,69 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         $data = $this->MUGetBuffer('Data') . $data;
 
-        // find start of packet
-        do {
-            if(ord($data[0]) != '{' && !(ord($data[0]) == 0xff && ord($data[1]) == 0xaa)) {
-                $data = substr($data, 1);
-            } else break;
-        } while(strlen($data) >= 2);
+        while(strlen($data) > 0) {
 
-        // JSON
-        if($data[0] == '{') {
-            $json = @json_decode($data);
-            if($json) {
-                $this->SendDebug('Processing JSON Packet', $data, 0);
+            // find start of packet
+            while(strlen($data) >= 2) {
+                if(ord($data[0]) != '{' && !(ord($data[0]) == 0xff && ord($data[1]) == 0xaa)) {
+                    $data = substr($data, 1);
+                } else break;
             }
-            $data = '';
-        // binary
-        } else if(ord($data[0]) == 0xff && ord($data[1]) == 0xaa && strlen($data) >= 7) {
-            // ff   aa   00   03   01   00   03
-            $len = unpack('n', $data, 5)[1];
-            $property = unpack('n', $data, 2)[1];
-            $type = $data[4];
-            if(strlen($data) >= 7 + $len) {
-                $this->SendDebug('Processing Packet', bin2hex(substr($data, 0, 7 + $len)), 0);
 
-                // power
-                if($property == 0x06) {
-                    $this->SetValue('PowerState', ord($data[7]));
-                // input
-                } else if($property == 0x03) {
-                    $value = ord($data[7]);
-                    // ff   aa   00   03   01   00   03   01   10   01 => ATV
-                    // ff   aa   00   03   01   00   03   02   04   01 => SAT
-                    // ff   aa   00   03   01   00   03   03   0e   01 => PS
-                    // ff   aa   00   03   01   00   03   06   02   01 => TV
-                    // ff   aa   00   03   01   00   03   07   06   01 => CD
-                    // ff   aa   00   03   01   00   03   0b   06   01 => DVD
-                    // ff   aa   00   03   01   00   03   0f   12   01 => AUX
-                    // ff   aa   00   03   01   00   03   17   13   01 => NET
-                    // ff   aa   00   03   01   00   03   15   14   01 => BT
-                    switch($value) {
-                        case 0x01: $value = 'ATV'; break;
-                        case 0x02: $value = 'SAT'; break;
-                        case 0x03: $value = 'PS'; break;
-                        case 0x06: $value = 'TV'; break;
-                        case 0x07: $value = 'CD'; break;
-                        case 0x0b: $value = 'DVD'; break;
-                        case 0x0f: $value = 'AUX'; break;
-                        default: 
-                        case 0x17: $value = 'NET'; break;
-                        case 0x15: $value = 'BT'; break;
-                    }
-                    $this->SetValue('Input', $value);
-                // volume
-                } else if($property = 0x0c) {
-                    if($len == 2) {
-                        $this->SetValue('Volume', ord($data[7]));
-                    }
+            // JSON
+            if($data[0] == '{') {
+                $json = @json_decode($data);
+                if($json) {
+                    $this->SendDebug('Processing JSON Packet', $data, 0);
                 }
-                $data = substr($data, 7 + $len);
+                $data = '';
+            // binary
+            } else if(strlen($data) >= 7 && ord($data[0]) == 0xff && ord($data[1]) == 0xaa) {
+                // ff   aa   00   03   01   00   03
+                $len = unpack('n', $data, 5)[1];
+                $property = unpack('n', $data, 2)[1];
+                $type = $data[4];
+                if(strlen($data) >= 7 + $len) {
+                    $this->SendDebug('Processing Packet', bin2hex(substr($data, 0, 7 + $len)), 0);
+
+                    // power
+                    if($property == 0x06) {
+                        $this->SetValue('PowerState', ord($data[7]));
+                    // input
+                    } else if($property == 0x03) {
+                        $value = ord($data[7]);
+                        // ff   aa   00   03   01   00   03   01   10   01 => ATV
+                        // ff   aa   00   03   01   00   03   02   04   01 => SAT
+                        // ff   aa   00   03   01   00   03   03   0e   01 => PS
+                        // ff   aa   00   03   01   00   03   06   02   01 => TV
+                        // ff   aa   00   03   01   00   03   07   06   01 => CD
+                        // ff   aa   00   03   01   00   03   0b   06   01 => DVD
+                        // ff   aa   00   03   01   00   03   0f   12   01 => AUX
+                        // ff   aa   00   03   01   00   03   17   13   01 => NET
+                        // ff   aa   00   03   01   00   03   15   14   01 => BT
+                        switch($value) {
+                            case 0x01: $value = 'ATV'; break;
+                            case 0x02: $value = 'SAT'; break;
+                            case 0x03: $value = 'PS'; break;
+                            case 0x06: $value = 'TV'; break;
+                            case 0x07: $value = 'CD'; break;
+                            case 0x0b: $value = 'DVD'; break;
+                            case 0x0f: $value = 'AUX'; break;
+                            default: 
+                            case 0x17: $value = 'NET'; break;
+                            case 0x15: $value = 'BT'; break;
+                        }
+                        $this->SetValue('Input', $value);
+                    // volume
+                    } else if($property = 0x0c) {
+                        if($len == 2) {
+                            $this->SetValue('Volume', ord($data[7]));
+                        }
+                    }
+                    $data = substr($data, 7 + $len);
+                }
+            } else {
+                break;
             }
         }
 
