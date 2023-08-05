@@ -148,7 +148,6 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SetValue('PowerState', $json['PowerStatus'] == 'ON');
                         $this->SetValue('Volume', $json['Volume']);
 
-                        /*
                         $state = 'stop';
                         if($json['PlayStatus'] == 'PLAY') $state = 'play';
                         if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
@@ -161,7 +160,6 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SetValue('Title', dashDefault($json['CurrentRadioStation']));
                         $this->SetValue('Cover', $json['coverArtUrl']);
                         $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
-                        */
                     }
 
 //                    {"CONTENTS":{"Album":"","Artist":"","Bass":"0","BitRate":0,"ConnectionStatus":"Active WLAN Connected","CurrentRadioStation":"","DurationInMilliseconds":0,"InputSource":"0","Mid":"0","MuteStatus":false,"PlayPresetIndex":0,"PlayStatus":"STOP","PlayUrl":"","PlaybackSource":0,"PowerStatus":"ON","PresetCount":0,"PresetList":[],"PresetPlaybackStatus":"InActive","Repeat":"OFF","SampleRate":"","Shuffle":"OFF","Treble":"0","Volume":18,"ZoneActive":false,"ZoneDeviceStatus":"none","ZoneMaster":"","ZoneName":"none","coverArtUrl":""},"Title":"DeviceStatusUpdate"}<LF>
@@ -247,9 +245,9 @@ class CantonSmartSpeakerDevice extends IPSModule
             }
             $data = $this->MakePacket(0x03, 0x01, $input);
         } else if($ident === 'Volume') {
-            $data = $this->MakePacket(0x0c, 0x01, chr(round($value*70)));
+            $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
         } else if($ident === 'PowerState') {
-            $data = $this->MakePacket(0x06, 0x01, $value ? "\0x01" : "\0x00");
+            $data = $this->MakePacket(0x06, 0x01, $value ? "\0x01" : "\x00");
         }
 
         $this->SendDebug('Sending Data', bin2hex($data), 0);
