@@ -247,7 +247,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         } else if($ident === 'Volume') {
             $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
         } else if($ident === 'PowerState') {
-            $data = $this->MakePacket(0x06, 0x01, $value ? "\0x01" : "\x00");
+            $data = $this->MakePacket(0x06, 0x01, $value ? "\x01" : "\x00");
         }
 
         $this->SendDebug('Sending Data', bin2hex($data), 0);
