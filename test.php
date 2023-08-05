@@ -1,5 +1,7 @@
 <?php
 
+var_dump(json_decode("{\"a\":5}\n"));
+
 if(ord("\xff") == 0xff) {
     echo "tst";
 }

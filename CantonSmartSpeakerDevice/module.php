@@ -125,7 +125,7 @@ class CantonSmartSpeakerDevice extends IPSModule
 
             // find start of packet
             while(strlen($data) >= 2) {
-                if(ord($data[0]) != '{' && !(ord($data[0]) == 0xff && ord($data[1]) == 0xaa)) {
+                if($data[0] != '{' && !(ord($data[0]) == 0xff && ord($data[1]) == 0xaa)) {
                     $data = substr($data, 1);
                 } else break;
             }
@@ -177,7 +177,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                     // volume
                     } else if($property = 0x0c) {
                         if($len == 2) {
-                            $this->SetValue('Volume', ord($data[7]));
+                            $this->SetValue('Volume', ceil((ord($data[7]) / 70) * 100));
                         }
                     }
                     $data = substr($data, 7 + $len);
