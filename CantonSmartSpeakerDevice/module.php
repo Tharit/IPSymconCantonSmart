@@ -124,7 +124,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         do {
             if(ord($data[0]) != '{' && !(ord($data[0]) == 0xff && ord($data[1]) == 0xaa)) {
                 $data = substr($data, 1);
-            }
+            } else break;
         } while(strlen($data) >= 2);
 
         // JSON
