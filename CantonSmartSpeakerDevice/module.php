@@ -103,11 +103,12 @@ class CantonSmartSpeakerDevice extends IPSModule
 
     private function MakePacket($property, $type, $value = "") {
         if($value) {
-            $length = pack('n', strlen($value));
+            $length = strlen($value);
         } else {
             $value = '';
-            $length = '';
+            $length = 0;
         }
+        $length = pack('n', $length);
         $property = chr($property);
         $type = chr($type);
         return "\xff\xaa\x00$property$type$length$value";
@@ -141,7 +142,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $property = unpack('n', $data, 2)[1];
             $type = $data[4];
             if(strlen($data) >= 7 + $len) {
-                $this->SendDebug('Processing Packet', bin2hex(substr($data, 0, 7 + $len), 0));
+                $this->SendDebug('Processing Packet', bin2hex(substr($data, 0, 7 + $len)));
 
                 // power
                 if($property == 0x06) {
