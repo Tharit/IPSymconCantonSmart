@@ -1,0 +1,12 @@
+{
+    "id": "{08798062-D6C8-46B1-BB12-51CCF8871EE6}",
+    "name": "Canton Smart Speaker",
+    "author": "Martin Kleinhans",
+    "url": "https://github.com/tharit/IPSymconCantonSmart",
+    "compatibility": {
+        "version": "5.5"
+    },
+    "version": "1.0",
+    "build": 1,
+    "date": 1
+}

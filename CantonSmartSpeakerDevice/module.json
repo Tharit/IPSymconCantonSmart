@@ -1,0 +1,15 @@
+{
+	"id": "{A113A3DD-ED7A-40A7-8F1E-243CE59B4EA9}",
+	"name": "CantonSmartSpeakerDevice",
+	"type": 3,
+	"vendor": "Canton",
+	"aliases": 
+	[
+		"Canton Speaker"
+	],
+	"parentRequirements": ["{79827379-F36E-4ADA-8A95-5F8D1DC92FA9}"],
+	"childRequirements": [],
+	"implemented": ["{018EF6B5-AB94-40C6-AA53-46943E824ACF}"],
+	"prefix": "CantonSmart",
+    "url": "https://github.com/tharit/IPSymconCantonSmart"
+}
