@@ -2,6 +2,11 @@
 
 require_once(__DIR__ . '/../libs/ModuleUtilities.php');
 
+function dashDefault($value) {
+    if($value) return $value;
+    return '-';
+}
+
 class CantonSmartSpeakerDevice extends IPSModule
 {
     use ModuleUtilities;
@@ -135,6 +140,28 @@ class CantonSmartSpeakerDevice extends IPSModule
                 $json = @json_decode($data);
                 if($json) {
                     $this->SendDebug('Processing JSON Packet', $data, 0);
+                    if($json['Title'] == 'DeviceStatusUpdate') {
+                        $json = $json['CONTENTS'];
+
+                        $this->SetValue('PowerState', $json['PowerStatus'] == 'ON');
+                        $this->SetValue('Volume', ceil((ord($data[7]) / 70) * 100));
+
+                        $state = 'stop';
+                        if($json['PlayStatus'] == 'PLAY') $state = 'play';
+                        if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
+
+                        $this->SetValue('State', $state);
+                        $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'spotify') == 0 ? 'Spotify' : ''));
+                        $this->SetValue('Position', 0);
+                        $this->SetValue('Album', dashDefault($json['Album']));
+                        $this->SetValue('Artist', dashDefault($json['Artist']));
+                        $this->SetValue('Title', dashDefault($json['CurrentRadioStation']));
+                        $this->SetValue('Cover', $json['coverArtUrl']);
+                        $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+                    }
+
+//                    {"CONTENTS":{"Album":"","Artist":"","Bass":"0","BitRate":0,"ConnectionStatus":"Active WLAN Connected","CurrentRadioStation":"","DurationInMilliseconds":0,"InputSource":"0","Mid":"0","MuteStatus":false,"PlayPresetIndex":0,"PlayStatus":"STOP","PlayUrl":"","PlaybackSource":0,"PowerStatus":"ON","PresetCount":0,"PresetList":[],"PresetPlaybackStatus":"InActive","Repeat":"OFF","SampleRate":"","Shuffle":"OFF","Treble":"0","Volume":18,"ZoneActive":false,"ZoneDeviceStatus":"none","ZoneMaster":"","ZoneName":"none","coverArtUrl":""},"Title":"DeviceStatusUpdate"}<LF>
+
                 }
                 $data = '';
             // binary
