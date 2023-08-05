@@ -32,7 +32,9 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->RegisterVariableInteger("Volume", "Volume", "~Intensity.100");
         $this->EnableAction("Volume");
         $this->RegisterVariableString("Input", "Input");
+        $this->EnableAction("Input");
         $this->RegisterVariableBoolean("PowerState", "PowerState");
+        $this->EnableAction("PowerState");
 
         // messages
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
