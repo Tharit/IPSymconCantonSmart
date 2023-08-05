@@ -145,21 +145,43 @@ class CantonSmartSpeakerDevice extends IPSModule
                     if($json['Title'] == 'DeviceStatusUpdate') {
                         $json = $json['CONTENTS'];
 
-                        $this->SetValue('PowerState', $json['PowerStatus'] == 'ON');
+                        $powerState = $json['PowerStatus'] == 'ON';
+                        $this->SetValue('PowerState', $powerState);
                         $this->SetValue('Volume', $json['Volume']);
 
                         $state = 'stop';
                         if($json['PlayStatus'] == 'PLAY') $state = 'play';
                         if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
 
-                        $this->SetValue('State', $state);
-                        $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'spotify') == 0 ? 'Spotify' : ''));
-                        $this->SetValue('Position', 0);
-                        $this->SetValue('Album', dashDefault($json['Album']));
-                        $this->SetValue('Artist', dashDefault($json['Artist']));
-                        $this->SetValue('Title', dashDefault($json['CurrentRadioStation']));
-                        $this->SetValue('Cover', $json['coverArtUrl']);
-                        $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+                        $input = $this->GetValue('Input');
+                        if($input == 'NET' && $powerState) {
+                            $this->SetValue('State', $state);
+                            $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'spotify') == 0 ? 'Spotify' : ''));
+                            $this->SetValue('Position', 0);
+                            $this->SetValue('Album', dashDefault($json['Album']));
+                            $this->SetValue('Artist', dashDefault($json['Artist']));
+                            $this->SetValue('Title', dashDefault($json['CurrentRadioStation']));
+                            $this->SetValue('Cover', $json['coverArtUrl']);
+                            $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+                        } else if($input == 'BT' && $powerState) {
+                            $this->SetValue('State', $state);
+                            $this->SetValue('Application', 'Bluetooth');
+                            $this->SetValue('Position', 0);
+                            $this->SetValue('Album', '-');
+                            $this->SetValue('Artist', '-');
+                            $this->SetValue('Title', '-');
+                            $this->SetValue('Cover', '-');
+                            $this->SetValue('Duration', 0);
+                        } else {
+                            $this->SetValue('State', 'stop');
+                            $this->SetValue('Application', '-');
+                            $this->SetValue('Position', 0);
+                            $this->SetValue('Album', '-');
+                            $this->SetValue('Artist', '-');
+                            $this->SetValue('Title', '-');
+                            $this->SetValue('Cover', '-');
+                            $this->SetValue('Duration', 0);
+                        }
                     }
 
 //                    {"CONTENTS":{"Album":"","Artist":"","Bass":"0","BitRate":0,"ConnectionStatus":"Active WLAN Connected","CurrentRadioStation":"","DurationInMilliseconds":0,"InputSource":"0","Mid":"0","MuteStatus":false,"PlayPresetIndex":0,"PlayStatus":"STOP","PlayUrl":"","PlaybackSource":0,"PowerStatus":"ON","PresetCount":0,"PresetList":[],"PresetPlaybackStatus":"InActive","Repeat":"OFF","SampleRate":"","Shuffle":"OFF","Treble":"0","Volume":18,"ZoneActive":false,"ZoneDeviceStatus":"none","ZoneMaster":"","ZoneName":"none","coverArtUrl":""},"Title":"DeviceStatusUpdate"}<LF>
