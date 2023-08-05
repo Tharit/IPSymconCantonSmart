@@ -120,10 +120,25 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         $data = $this->MUGetBuffer('Data') . $data;
 
-        if(strlen($data) >= 7) {
+        // find start of packet
+        do {
+            if(ord($data[0]) != '{' && !(ord($data[0]) == 0xff && ord($data[1]) == 0xaa)) {
+                $data = substr($data, 1);
+            }
+        } while(strlen($data) >= 2);
+
+        // JSON
+        if($data[0] == '{') {
+            $json = @json_decode($data);
+            if($json) {
+                $this->SendDebug('Processing JSON Packet', $data, 0);
+            }
+            $data = '';
+        // binary
+        } else if(ord($data[0]) == 0xff && ord($data[1]) == 0xaa && strlen($data) >= 7) {
             // ff   aa   00   03   01   00   03
-            $len = unpack('n', $data, 5);
-            $property = unpack('n', $data, 2);
+            $len = unpack('n', $data, 5)[1];
+            $property = unpack('n', $data, 2)[1];
             $type = $data[4];
             if(strlen($data) >= 7 + $len) {
                 $this->SendDebug('Processing Packet', bin2hex(substr($data, 0, 7 + $len), 0));

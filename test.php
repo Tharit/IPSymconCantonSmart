@@ -1,5 +1,10 @@
 <?php
 
+if(ord("\xff") == 0xff) {
+    echo "tst";
+}
+return;
+
 function MakePacket($property, $type, $value = "") {
     if($value) {
         $length = pack('n', strlen($value));
