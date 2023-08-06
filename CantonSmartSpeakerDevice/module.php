@@ -354,7 +354,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SetValue('PowerState', $powerState);
                         $this->SetValue('Volume', $json['Volume']);
 
-                        if($this->GetValue("Input") == INPUT_NET) {
+                        if($this->GetValue("Input") == INPUT_NET && $powerState) {
                             $this->SetValue('State', $state);
                             $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'scdn.co') == false ? '' : 'Spotify'));
                             $this->SetValue('Position', 0);
