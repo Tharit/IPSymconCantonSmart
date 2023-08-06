@@ -341,6 +341,9 @@ class CantonSmartSpeakerDevice extends IPSModule
                                     $this->UpdateMode(0);
                                     return '';
                                 }
+                                if($input != $this->GetValue("Input")) {
+                                    $this->SetValue("Input", $value);
+                                }
                             }
                             socket_close($sock);
                         }
@@ -525,7 +528,6 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->SetValue("Duration", 0);
         $this->SetValue("Position", 0);
         $this->SetValue('State', 'stop');
-        $this->SetValue('Input', INPUT_NET);
         $this->SetValue('PowerState', false);
     }
 }
