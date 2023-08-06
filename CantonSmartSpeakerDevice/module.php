@@ -51,7 +51,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->ResetState();
 
         // if this is not the initial creation there might already be a parent
-        /*if($this->UpdateConnection() && $this->HasActiveParent()) {
+        if($this->UpdateConnection() && $this->HasActiveParent()) {
             $this->SendDebug('Module Create', 'Already connected', 0);
             $parentID = $this->GetConnectionID();
             $port = IPS_GetProperty($parentID, 'Port');
@@ -60,7 +60,6 @@ class CantonSmartSpeakerDevice extends IPSModule
         } else {
             $this->UpdateMode(0);
         }
-        */
     }
 
     private function GetMode() {
@@ -339,9 +338,9 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         $mode = $this->GetMode();
         if($mode == 0) {
-            //$data = $this->ReceiveDataDevice($data);
+            $data = $this->ReceiveDataDevice($data);
         } else {
-           //$data = $this->ReceiveDataStream($data);
+            $data = $this->ReceiveDataStream($data);
         }
 
         $this->MUSetBuffer('Data', $data);
