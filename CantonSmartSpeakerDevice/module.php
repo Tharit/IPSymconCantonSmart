@@ -50,6 +50,8 @@ class CantonSmartSpeakerDevice extends IPSModule
         // clear state on startup
         $this->ResetState();
 
+        $this->RegisterTimer('Reconfigure', 0, 'CantonSmart_Reconfigure($_IPS[\'TARGET\']);');
+
         // if this is not the initial creation there might already be a parent
         if($this->UpdateConnection() && $this->HasActiveParent()) {
             $this->SendDebug('Module Create', 'Already connected', 0);
@@ -60,8 +62,6 @@ class CantonSmartSpeakerDevice extends IPSModule
         } else {
             $this->UpdateMode(0);
         }
-
-        $this->RegisterTimer('Reconfigure', 0, 'CantonSmart_Reconfigure($_IPS[\'TARGET\']);');
     }
 
     private function GetMode() {
