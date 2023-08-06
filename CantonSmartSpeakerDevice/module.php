@@ -91,6 +91,25 @@ class CantonSmartSpeakerDevice extends IPSModule
         }
         IPS_ApplyChanges($parentID);
     }
+    
+    /**
+     * change mode
+     */
+    private function ValidateMode() {
+        $mode = $this->GetMode();
+
+        $parentID = $this->GetConnectionID();
+        $port = IPS_GetProperty($parentID, 'Port');
+
+        if(($mode == 0 && $port != 50006) || 
+        ($mode == 1 && $port != 7777)) {
+            $interval = $this->GetTimerInterval('Reconfigure');
+            if($interval !== 1000) {
+                $this->SetTimerInterval('Reconfigure', 1000);
+                $this->SendDebug('Mode change', 'Fixing mode...', 0);
+            }
+        }
+    }
 
     /**
      * change mode
@@ -147,6 +166,8 @@ class CantonSmartSpeakerDevice extends IPSModule
                 $this->ResetState();
 
                 $this->SendDebug('CHANGESTATUS', json_encode($Data), 0);
+
+                $this->ValidateMode();
 
                 // if parent became active: connect
                 if ($Data[0] === IS_ACTIVE) {
