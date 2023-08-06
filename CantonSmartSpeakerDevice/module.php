@@ -60,24 +60,17 @@ class CantonSmartSpeakerDevice extends IPSModule
         } else {
             $this->UpdateMode(0);
         }
+
+        $this->RegisterTimer('Reconfigure', 0, 'CantonSmart_Reconfigure($_IPS[\'TARGET\']);');
     }
 
     private function GetMode() {
         return $this->MUGetBuffer('mode');
     }
 
-    /**
-     * change mode
-     */
-    private function UpdateMode($newMode) {
-        $mode = $this->MUGetBuffer('mode');
-        $this->MUSetBuffer('mode', $newMode);
-
-        if($mode == '') {
-            $this->SendDebug('Mode init', 'Initializing mode to ' . $newMode, 0);
-        } else {
-            $this->SendDebug('Mode change', 'Changing mode from ' . $mode . ' to ' . $newMode, 0);
-        }
+    public function Reconfigure() {
+        $this->SendDebug('Reconfigure', 'Reconfiguring socket...', 0);
+        $this->SetTimerInterval('Reconfigure', 0);
 
         $parentID = $this->GetConnectionID();
         $port = IPS_GetProperty($parentID, 'Port');
@@ -97,6 +90,22 @@ class CantonSmartSpeakerDevice extends IPSModule
             IPS_SetProperty($parentID, 'Open', true);
         }
         IPS_ApplyChanges($parentID);
+    }
+
+    /**
+     * change mode
+     */
+    private function UpdateMode($newMode) {
+        $mode = $this->MUGetBuffer('mode');
+        $this->MUSetBuffer('mode', $newMode);
+
+        if($mode == '') {
+            $this->SendDebug('Mode init', 'Initializing mode to ' . $newMode, 0);
+        } else {
+            $this->SendDebug('Mode change', 'Changing mode from ' . $mode . ' to ' . $newMode, 0);
+        }
+
+        $this->SetTimerInterval('Reconfigure', 1000);
 
         return true;
     }
@@ -112,11 +121,10 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         parent::ApplyChanges();
 
-        /*if (!IPS_GetProperty($parentID, 'Open')) {
+        if (!IPS_GetProperty($parentID, 'Open')) {
             IPS_SetProperty($parentID, 'Open', true);
             @IPS_ApplyChanges($parentID);
         }
-        */
     }
 
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
