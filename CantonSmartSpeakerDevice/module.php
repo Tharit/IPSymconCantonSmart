@@ -267,13 +267,13 @@ class CantonSmartSpeakerDevice extends IPSModule
                     $data2 = substr($data, 10, $len);
                     $json = @json_decode($data2, true);
                     if($json && $json['Title'] == 'DeviceStatusUpdate') {
+                        $json = $json['CONTENTS'];
+                        
                         if($json['InputSource'] == 'NONE') {
                             $this->UpdateMode(0);
                             return '';
                         }
 
-                        $json = $json['CONTENTS'];
-                        
                         $this->SendDebug('Processing JSON Value', $data2, 0);
 
                         $powerState = $json['PowerStatus'] == 'ON';
