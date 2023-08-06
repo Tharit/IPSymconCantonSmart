@@ -108,8 +108,10 @@ class CantonSmartSpeakerDevice extends IPSModule
                 $this-MUSetBuffer('SkipData', true);
                 $this->SetTimerInterval('Reconfigure', 1000);
                 $this->SendDebug('Mode change', 'Fixing mode...', 0);
+                return false;
             }
         }
+        return true;
     }
 
     /**
