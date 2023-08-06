@@ -336,9 +336,9 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         $mode = $this->GetMode();
         if($mode == 0) {
-            $data = $this->ReceiveDataDevice($data);
+        //    $data = $this->ReceiveDataDevice($data);
         } else {
-            $data = $this->ReceiveDataStream($data);
+         //   $data = $this->ReceiveDataStream($data);
         }
 
         $this->MUSetBuffer('Data', $data);
