@@ -354,14 +354,25 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SetValue('PowerState', $powerState);
                         $this->SetValue('Volume', $json['Volume']);
 
-                        $this->SetValue('State', $state);
-                        $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'scdn.co') == false ? '' : 'Spotify'));
-                        $this->SetValue('Position', 0);
-                        $this->SetValue('Album', dashDefault($json['Album']));
-                        $this->SetValue('Artist', dashDefault($json['Artist']));
-                        $this->SetValue('Title', dashDefault($json['TrackName']));
-                        $this->SetValue('Cover', $json['coverArtUrl']);
-                        $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+                        if($this->GetValue("Input") == INPUT_NET) {
+                            $this->SetValue('State', $state);
+                            $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'scdn.co') == false ? '' : 'Spotify'));
+                            $this->SetValue('Position', 0);
+                            $this->SetValue('Album', dashDefault($json['Album']));
+                            $this->SetValue('Artist', dashDefault($json['Artist']));
+                            $this->SetValue('Title', dashDefault($json['TrackName']));
+                            $this->SetValue('Cover', $json['coverArtUrl']);
+                            $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+                        } else {
+                            $this->SetValue('State', 'stop');
+                            $this->SetValue("Application", "-");
+                            $this->SetValue("Position", 0);
+                            $this->SetValue("Album", '-');
+                            $this->SetValue("Artist", '-');
+                            $this->SetValue("Title", '-');
+                            $this->SetValue("Cover", "");
+                            $this->SetValue("Duration", 0);
+                        }
                     }
                 // playback status
                 } else if($cmd == 51 && $type == 2) {
