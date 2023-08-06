@@ -340,7 +340,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
                     }
                 // playback status
-                } else if($cmd == 50 && $type == 2) {
+                } else if($cmd == 51 && $type == 2) {
                     $data2 = substr($data, 10, $len);
                     if(ord($data2) == 30) {
                         $this->SetValue('State', 'play');
@@ -449,23 +449,38 @@ class CantonSmartSpeakerDevice extends IPSModule
     }
 
     public function Play() {
-        // @TODO
+        $mode = $this->GetMode();
+        if($mode != 1) return;
+        $data = "\x00\x00\x02\x28\x00\x00\x0\x00\x04\x00PLAY";
+        CSCK_SendText($this->GetConnectionID(), $data);
     }
 
     public function Pause() {
-        // @TODO
+        $mode = $this->GetMode();
+        if($mode != 1) return;
+        $data = "\x00\x00\x02\x28\x00\x00\x0\x00\x05\x00PAUSE";
+        CSCK_SendText($this->GetConnectionID(), $data);
     }
 
     public function Stop() {
-        // @TODO
+        $mode = $this->GetMode();
+        if($mode != 1) return;
+        $data = "\x00\x00\x02\x28\x00\x00\x0\x00\x04\x00STOP";
+        CSCK_SendText($this->GetConnectionID(), $data);
     }
 
     public function Next() {
-        // @TODO
+        $mode = $this->GetMode();
+        if($mode != 1) return;
+        $data = "\x00\x00\x02\x28\x00\x00\x0\x00\x04\x00NEXT";
+        CSCK_SendText($this->GetConnectionID(), $data);
     }
 
     public function Prev() {
-        // @TODO
+        $mode = $this->GetMode();
+        if($mode != 1) return;
+        $data = "\x00\x00\x02\x28\x00\x00\x0\x00\x04\x00PREV";
+        CSCK_SendText($this->GetConnectionID(), $data);
     }
 
     //------------------------------------------------------------------------------------
