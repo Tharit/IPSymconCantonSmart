@@ -1,5 +1,11 @@
 <?php
 
+/*
+
+@TODO: change input to int variable / predefined profile?
+@TODO: open second socket connection to streaming service on 7777
+
+*/
 require_once(__DIR__ . '/../libs/ModuleUtilities.php');
 
 function dashDefault($value) {
@@ -47,6 +53,36 @@ class CantonSmartSpeakerDevice extends IPSModule
         // if this is not the initial creation there might already be a parent
         if($this->UpdateConnection() && $this->HasActiveParent()) {
             $this->SendDebug('Module Create', 'Already connected', 0);
+        }
+
+        $this->MUSetBuffer('mode', 0);
+    }
+
+    private function GetMode() {
+        return $this->MUGetBuffer('mode');
+    }
+
+    /**
+     * change mode
+     */
+    private function UpdateMode($newMode) {
+        $mode = $this->MUGetBuffer('mode');
+        $this->MUSetBuffer('mode', $newMode);
+
+        $this->SendDebug('Mode change', 'Changing mode from ' . $mode . ' to ' . $newMode, 0);
+
+        $parentID = $this->GetConnectionID();
+        $port = IPS_GetProperty($parentID, 'Port');
+
+        $targetPort = $mode == 0 ? 50006 : 7777;
+        if($port == $targetPort) return;
+
+        if (IPS_GetProperty($parentID, 'Open')) {
+            IPS_SetProperty($parentID, 'Open', false);
+            IPS_SetProperty($parentId, 'Port', $targetPort);
+            IPS_SetProperty($parentID, 'Open', true);
+        } else {
+            IPS_SetProperty($parentId, 'Port', $targetPort);
         }
     }
 
@@ -100,12 +136,18 @@ class CantonSmartSpeakerDevice extends IPSModule
     }
 
     public function Connect() {
-        // request input
-        // request volume
-        // request power state
-        $data = $this->MakePacket(0x03, 0x02) . $this->MakePacket(0x0c, 0x02) . $this->MakePacket(0x06, 0x02);
-        $this->SendDebug('Sending Data', bin2hex($data), 0);
-        CSCK_SendText($this->GetConnectionID(), $data);
+        $mode = $this->GetMode();
+        if($mode == 0) {
+            // request input
+            // request volume
+            // request power state
+            $data = $this->MakePacket(0x03, 0x02) . $this->MakePacket(0x0c, 0x02) . $this->MakePacket(0x06, 0x02);
+            $this->SendDebug('Sending Data', bin2hex($data), 0);
+            CSCK_SendText($this->GetConnectionID(), $data);
+        } else {
+            $data = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
+            CSCK_SendText($this->GetConnectionID(), $data);
+        }
     }
 
     private function MakePacket($property, $type, $value = "") {
@@ -121,15 +163,8 @@ class CantonSmartSpeakerDevice extends IPSModule
         return "\xff\xaa\x00$property$type$length$value";
     }
 
-    public function ReceiveData($data) {
-        // unpack & decode data
-        $data = json_decode($data);
-        $data = utf8_decode($data->Buffer);
-
-        $data = $this->MUGetBuffer('Data') . $data;
-
+    public function ReceiveDataDevice($data) {
         while(strlen($data) > 0) {
-
             // find start of packet
             while(strlen($data) >= 2) {
                 if($data[0] != '{' && !(ord($data[0]) == 0xff && ord($data[1]) == 0xaa)) {
@@ -148,44 +183,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $powerState = $json['PowerStatus'] == 'ON';
                         $this->SetValue('PowerState', $powerState);
                         $this->SetValue('Volume', $json['Volume']);
-
-                        $state = 'stop';
-                        if($json['PlayStatus'] == 'PLAY') $state = 'play';
-                        if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
-
-                        $input = $this->GetValue('Input');
-                        if($input == 'NET' && $powerState) {
-                            $this->SetValue('State', $state);
-                            $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'spotify') == 0 ? 'Spotify' : ''));
-                            $this->SetValue('Position', 0);
-                            $this->SetValue('Album', dashDefault($json['Album']));
-                            $this->SetValue('Artist', dashDefault($json['Artist']));
-                            $this->SetValue('Title', dashDefault($json['CurrentRadioStation']));
-                            $this->SetValue('Cover', $json['coverArtUrl']);
-                            $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
-                        } else if($input == 'BT' && $powerState) {
-                            $this->SetValue('State', $state);
-                            $this->SetValue('Application', 'Bluetooth');
-                            $this->SetValue('Position', 0);
-                            $this->SetValue('Album', '-');
-                            $this->SetValue('Artist', '-');
-                            $this->SetValue('Title', '-');
-                            $this->SetValue('Cover', '-');
-                            $this->SetValue('Duration', 0);
-                        } else {
-                            $this->SetValue('State', 'stop');
-                            $this->SetValue('Application', '-');
-                            $this->SetValue('Position', 0);
-                            $this->SetValue('Album', '-');
-                            $this->SetValue('Artist', '-');
-                            $this->SetValue('Title', '-');
-                            $this->SetValue('Cover', '-');
-                            $this->SetValue('Duration', 0);
-                        }
                     }
-
-//                    {"CONTENTS":{"Album":"","Artist":"","Bass":"0","BitRate":0,"ConnectionStatus":"Active WLAN Connected","CurrentRadioStation":"","DurationInMilliseconds":0,"InputSource":"0","Mid":"0","MuteStatus":false,"PlayPresetIndex":0,"PlayStatus":"STOP","PlayUrl":"","PlaybackSource":0,"PowerStatus":"ON","PresetCount":0,"PresetList":[],"PresetPlaybackStatus":"InActive","Repeat":"OFF","SampleRate":"","Shuffle":"OFF","Treble":"0","Volume":18,"ZoneActive":false,"ZoneDeviceStatus":"none","ZoneMaster":"","ZoneName":"none","coverArtUrl":""},"Title":"DeviceStatusUpdate"}<LF>
-
                 }
                 $data = '';
             // binary
@@ -225,6 +223,10 @@ class CantonSmartSpeakerDevice extends IPSModule
                             case 0x15: $value = 'BT'; break;
                         }
                         $this->SetValue('Input', $value);
+                        if($this->GetMode() == 0 && ($value == 'NET' || $value == 'BT')) {
+                            $this->UpdateMode(1);
+                            return '';
+                        }
                     // volume
                     } else if($property = 0x0c) {
                         if($len == 2) {
@@ -238,49 +240,138 @@ class CantonSmartSpeakerDevice extends IPSModule
             }
         }
 
+        return $data;
+    }
+
+    public function ReceiveDataStream($data) {
+        while(strlen($data) > 0) {
+            // binary
+            if(strlen($data) >= 10) {
+                $type = ord($data[2]);
+                $cmd = unpack('n', $data, 3)[1];
+                $len = unpack('n', $data, 8)[1];
+
+                // device status notification
+                if($cmd == 112 && $type == 2) {
+                    $data2 = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
+                    CSCK_SendText($this->GetConnectionID(), $data2);
+                // device status data
+                } else if($cmd == 112 && $type == 1) {
+                    $data2 = substr($data, 10, $len);
+                    $json = @json_decode($data2, true);
+                    if($json && $json['Title'] == 'DeviceStatusUpdate') {
+                        if($json['InputSource'] == 'NONE') {
+                            $this->UpdateMode(0);
+                            return '';
+                        }
+
+                        $json = $json['CONTENTS'];
+                        
+                        $this->SendDebug('Processing JSON Value', $data2, 0);
+
+                        $powerState = $json['PowerStatus'] == 'ON';
+                        $this->SetValue('PowerState', $powerState);
+                        $this->SetValue('Volume', $json['Volume']);
+
+                        $state = 'stop';
+                        if($json['PlayStatus'] == 'PLAY') $state = 'play';
+                        if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
+
+                        $this->SetValue('State', $state);
+                        $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'scdn.co') == false ? '' : 'Spotify'));
+                        $this->SetValue('Position', 0);
+                        $this->SetValue('Album', dashDefault($json['Album']));
+                        $this->SetValue('Artist', dashDefault($json['Artist']));
+                        $this->SetValue('Title', dashDefault($json['CurrentRadioStation']));
+                        $this->SetValue('Cover', $json['coverArtUrl']);
+                        $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+                    }
+                // playback status
+                } else if($cmd == 50 && $type == 2) {
+                    $data2 = substr($data, 10, $len);
+                    if(ord($data2) == 30) {
+                        $this->SetValue('State', 'play');
+                    } else if(ord($data2) == 31) {
+                        $this->SetValue('State', 'stop');
+                    } else if(ord($data2) == 32) {
+                        $this->SetValue('State', 'pause');
+                    }
+                // playback position
+                } else if($cmd == 49 && $type == 2) {
+                    $data2 = substr($data, 10, $len);
+                    $this->SetValue('Position', floor($data2 / 1000));
+                }
+                $data = substr($data, 10 + $len);
+            } else {
+                break;
+            }
+        }
+
+        return $data;
+    }
+
+    public function ReceiveData($data) {
+        // unpack & decode data
+        $data = json_decode($data);
+        $data = utf8_decode($data->Buffer);
+
+        $data = $this->MUGetBuffer('Data') . $data;
+
+        $mode = $this->GetMode();
+        if($mode == 0) {
+            $data = $this->ReceiveDataDevice($data);
+        } else {
+            $data = $this->ReceiveDataStream($data);
+        }
+
         $this->MUSetBuffer('Data', $data);
     }
 
     public function RequestAction($ident, $value)
     {
-        if($ident === 'Input') {
-            switch($value) {
-                // ff   aa   00   03   01   00   03   01   10   01 => ATV
-                case 'ATV': $input = "\x01\x10\x01"; break;
-                // ff   aa   00   03   01   00   03   02   04   01 => SAT
-                case 'SAT': $input = "\x02\x04\x01"; break;
-                // ff   aa   00   03   01   00   03   03   0e   01 => PS
-                case 'PS': $input = "\x03\x0e\x01"; break;
-                // ff   aa   00   03   01   00   03   06   02   01 => TV
-                case 'TV': $input = "\x06\x02\x01"; break;
-                // ff   aa   00   03   01   00   03   07   06   01 => CD
-                case 'CD': $input = "\x07\x06\x01"; break;
-                // ff   aa   00   03   01   00   03   0b   06   01 => DVD
-                case 'DVD': $input = "\x0b\x06\x01"; break;
-                // ff   aa   00   03   01   00   03   0f   12   01 => AUX
-                case 'AUX': $input = "\x0f\x12\x01"; break;
-                // ff   aa   00   03   01   00   03   17   13   01 => NET
-                case 'NET': $input = "\x17\x13\x01"; break;
-                // ff   aa   00   03   01   00   03   15   14   01 => BT
-                case 'BT': $input = "\x15\x14\x01"; break;
-                default: return;
+        $mode = $this->GetMode();
+        if($mode == 0) {
+            if($ident === 'Input') {
+                switch($value) {
+                    // ff   aa   00   03   01   00   03   01   10   01 => ATV
+                    case 'ATV': $input = "\x01\x10\x01"; break;
+                    // ff   aa   00   03   01   00   03   02   04   01 => SAT
+                    case 'SAT': $input = "\x02\x04\x01"; break;
+                    // ff   aa   00   03   01   00   03   03   0e   01 => PS
+                    case 'PS': $input = "\x03\x0e\x01"; break;
+                    // ff   aa   00   03   01   00   03   06   02   01 => TV
+                    case 'TV': $input = "\x06\x02\x01"; break;
+                    // ff   aa   00   03   01   00   03   07   06   01 => CD
+                    case 'CD': $input = "\x07\x06\x01"; break;
+                    // ff   aa   00   03   01   00   03   0b   06   01 => DVD
+                    case 'DVD': $input = "\x0b\x06\x01"; break;
+                    // ff   aa   00   03   01   00   03   0f   12   01 => AUX
+                    case 'AUX': $input = "\x0f\x12\x01"; break;
+                    // ff   aa   00   03   01   00   03   17   13   01 => NET
+                    case 'NET': $input = "\x17\x13\x01"; break;
+                    // ff   aa   00   03   01   00   03   15   14   01 => BT
+                    case 'BT': $input = "\x15\x14\x01"; break;
+                    default: return;
+                }
+                $data = $this->MakePacket(0x03, 0x01, $input);
+            } else if($ident === 'Volume') {
+                $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
+            } else if($ident === 'PowerState') {
+                $data = $this->MakePacket(0x06, 0x01, $value ? "\x01" : "\x00");
             }
-            $data = $this->MakePacket(0x03, 0x01, $input);
-        } else if($ident === 'Volume') {
-            $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
-        } else if($ident === 'PowerState') {
-            $data = $this->MakePacket(0x06, 0x01, $value ? "\x01" : "\x00");
-        }
 
-        $this->SendDebug('Sending Data', bin2hex($data), 0);
-        CSCK_SendText($this->GetConnectionID(), $data);
+            $this->SendDebug('Sending Data', bin2hex($data), 0);
+            CSCK_SendText($this->GetConnectionID(), $data);
+        } else {
+            // @TODO
+        }
     }
 
     //------------------------------------------------------------------------------------
     // external methods
     //------------------------------------------------------------------------------------
     public function SetVolume(int $volume) {
-        // @TODO
+        $this->RequestAction('Volume', $volume);
     }
 
     public function Play() {
@@ -307,6 +398,8 @@ class CantonSmartSpeakerDevice extends IPSModule
     // module internals
     //------------------------------------------------------------------------------------
     private function ResetState() {
+        $this->MUSetBuffer('Data', '');
+                    
         $this->SetValue("Artist", '-');
         $this->SetValue("Album", '-');
         $this->SetValue("Title", '-');
@@ -314,7 +407,6 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->SetValue("Source", "-");
         $this->SetValue("Application", "-");
         $this->SetValue("Duration", 0);
-        $this->SetValue('Source', '-');
         $this->SetValue('State', 'stop');
         $this->SetValue('Input', 'NET');
         $this->SetValue('PowerState', false);

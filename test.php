@@ -1,5 +1,5 @@
 <?php
-
+/*
 var_dump(json_decode("{\"a\":5}\n"));
 
 if(ord("\xff") == 0xff) {
@@ -21,7 +21,7 @@ function MakePacket($property, $type, $value = "") {
 
 var_dump(bin2hex(MakePacket(0x0c, 0x01, "\x23")));
 return;
-
+*/
 $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 socket_connect($sock, '10.0.125.96', 7777);
 
@@ -31,9 +31,9 @@ socket_send($sock, $buffer, 23,0);
 $bytes = socket_recv($sock, $buffer, 1024, 0);
 //$buffer2 = "\x00\x00\x02\x28\x00\x00\x0\x00\x00\x00";
 //$buffer2 = "\x00\x00\x02\x33\x00\x00\x00\x00\x01\x002";
-$buffer2 = "\x00\x00\x02\x28\x00\x00\x00\x00\x04\x00STOP";
+$buffer2 = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";//STOP";
 //$buffer2 = "\x00\x00\x02\x33\x00\x00\x00\x00\x01\x00\x33";
-            socket_send($sock, $buffer2, 14,0);
+            socket_send($sock, $buffer2, 10,0);
 
 while(true) {
     $bytes = socket_recv($sock, $buffer, 1024, 0);
@@ -176,9 +176,9 @@ socket_connect($sock, '10.0.125.96', 50006);
 //$buffer = "\xff\xaa\x00\x03\x02\x00\x00";//\xff\xaa\x00\x0c\x02\x00\x00\xff\xaa\x00\x03\x02\x00\x00";
 
 //$buffer = "\xff\xaa\x00\x0c\x02\x00\x00\xff\xaa\x00\x04\x02\x00\x00\xff\xaa\x00\x06\x02\x00\x00";
-//$buffer = "\xff\xaa\x00\x0c\x01\x00\x01\x16";
+$buffer = "\xff\xaa\x00\x07\x02\x00\x00";
 
-//socket_send($sock, $buffer, 10, 0);
+socket_send($sock, $buffer, 7, 0);
 
 while(true) {
     $bytes = socket_recv($sock, $buffer, 1024, 0);
