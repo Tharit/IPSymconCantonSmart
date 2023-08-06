@@ -34,6 +34,19 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         $this->RequireParent('{3CFF0FD9-E306-41DB-9B5A-9D06D38576C3}'); // IO Client Socket
 
+        // profiles
+        $this->RegisterProfileIntegerEx('CantonSmart.Input', 'Database', '', '', [
+            [0, 'ATV',  '', INPUT_ATV],
+            [1, 'SAT',  '', INPUT_SAT],
+            [2, 'PS',  '', INPUT_PS],
+            [3, 'TV',  '', INPUT_TV],
+            [4, 'CD',  '', INPUT_CD],
+            [5, 'DVD',  '', INPUT_DVD],
+            [6, 'AUX',  '', INPUT_AUX],
+            [7, 'NET',  '', INPUT_NET],
+            [8, 'BT',  '', INPUT_BT]
+        ]);
+
         // variables
         $this->RegisterVariableBoolean("Connected", "Connected");
         $this->RegisterVariableString("Source", "Source");
@@ -47,9 +60,9 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->RegisterVariableString("Cover", "Cover");
         $this->RegisterVariableInteger("Volume", "Volume", "~Intensity.100");
         $this->EnableAction("Volume");
-        $this->RegisterVariableInteger("Input", "Input");
+        $this->RegisterVariableInteger("Input", "Input", "CantonSmart.Input");
         $this->EnableAction("Input");
-        $this->RegisterVariableBoolean("PowerState", "PowerState");
+        $this->RegisterVariableBoolean("PowerState", "PowerState", "~Switch");
         $this->EnableAction("PowerState");
 
         // messages
