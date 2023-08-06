@@ -1,5 +1,15 @@
 <?php
 
+define('INPUT_ATV', 0x01);
+define('INPUT_SAT', 0x02);
+define('INPUT_PS', 0x03);
+define('INPUT_TV', 0x06);
+define('INPUT_CD', 0x07);
+define('INPUT_DVD', 0x0b);
+define('INPUT_AUX', 0x0f);
+define('INPUT_NET', 0x17);
+define('INPUT_BT', 0x15);
+
 /*
 
 @TODO: change input to int variable / predefined profile?
@@ -37,7 +47,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->RegisterVariableString("Cover", "Cover");
         $this->RegisterVariableInteger("Volume", "Volume", "~Intensity.100");
         $this->EnableAction("Volume");
-        $this->RegisterVariableString("Input", "Input");
+        $this->RegisterVariableInteger("Input", "Input");
         $this->EnableAction("Input");
         $this->RegisterVariableBoolean("PowerState", "PowerState");
         $this->EnableAction("PowerState");
@@ -254,29 +264,8 @@ class CantonSmartSpeakerDevice extends IPSModule
                     // input
                     } else if($property == 0x03 && $type == 0x01) {
                         $value = ord($data[7]);
-                        // ff   aa   00   03   01   00   03   01   10   01 => ATV
-                        // ff   aa   00   03   01   00   03   02   04   01 => SAT
-                        // ff   aa   00   03   01   00   03   03   0e   01 => PS
-                        // ff   aa   00   03   01   00   03   06   02   01 => TV
-                        // ff   aa   00   03   01   00   03   07   06   01 => CD
-                        // ff   aa   00   03   01   00   03   0b   06   01 => DVD
-                        // ff   aa   00   03   01   00   03   0f   12   01 => AUX
-                        // ff   aa   00   03   01   00   03   17   13   01 => NET
-                        // ff   aa   00   03   01   00   03   15   14   01 => BT
-                        switch($value) {
-                            case 0x01: $value = 'ATV'; break;
-                            case 0x02: $value = 'SAT'; break;
-                            case 0x03: $value = 'PS'; break;
-                            case 0x06: $value = 'TV'; break;
-                            case 0x07: $value = 'CD'; break;
-                            case 0x0b: $value = 'DVD'; break;
-                            case 0x0f: $value = 'AUX'; break;
-                            default: 
-                            case 0x17: $value = 'NET'; break;
-                            case 0x15: $value = 'BT'; break;
-                        }
                         $this->SetValue('Input', $value);
-                        if($this->GetMode() == 0 && ($value == 'NET' || $value == 'BT')) {
+                        if($this->GetMode() == 0 && ($value == INPUT_NET || $value == INPUT_BT)) {
                             $this->UpdateMode(1);
                             return '';
                         }
@@ -335,28 +324,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                             $this->SendDebug('Validating input', bin2hex($buffer), 0);
                             if($bytes == 10) {
                                 $value = ord($buffer[7]);
-                                // ff   aa   00   03   01   00   03   01   10   01 => ATV
-                                // ff   aa   00   03   01   00   03   02   04   01 => SAT
-                                // ff   aa   00   03   01   00   03   03   0e   01 => PS
-                                // ff   aa   00   03   01   00   03   06   02   01 => TV
-                                // ff   aa   00   03   01   00   03   07   06   01 => CD
-                                // ff   aa   00   03   01   00   03   0b   06   01 => DVD
-                                // ff   aa   00   03   01   00   03   0f   12   01 => AUX
-                                // ff   aa   00   03   01   00   03   17   13   01 => NET
-                                // ff   aa   00   03   01   00   03   15   14   01 => BT
-                                switch($value) {
-                                    case 0x01: $value = 'ATV'; break;
-                                    case 0x02: $value = 'SAT'; break;
-                                    case 0x03: $value = 'PS'; break;
-                                    case 0x06: $value = 'TV'; break;
-                                    case 0x07: $value = 'CD'; break;
-                                    case 0x0b: $value = 'DVD'; break;
-                                    case 0x0f: $value = 'AUX'; break;
-                                    default: 
-                                    case 0x17: $value = 'NET'; break;
-                                    case 0x15: $value = 'BT'; break;
-                                }
-                                if(!($value == 'NET' || $value == 'BT')) {
+                                if(!($value == INPUT_NET || $value == INPUT_BT)) {
                                     $this->UpdateMode(0);
                                     return '';
                                 }
@@ -434,29 +402,29 @@ class CantonSmartSpeakerDevice extends IPSModule
             $forceDevice = true;
             switch($value) {
                 // ff   aa   00   03   01   00   03   01   10   01 => ATV
-                case 'ATV': $input = "\x01\x10\x01"; break;
+                case INPUT_ATV: $input = "\x01\x10\x01"; break;
                 // ff   aa   00   03   01   00   03   02   04   01 => SAT
-                case 'SAT': $input = "\x02\x04\x01"; break;
+                case INPUT_SAT: $input = "\x02\x04\x01"; break;
                 // ff   aa   00   03   01   00   03   03   0e   01 => PS
-                case 'PS': $input = "\x03\x0e\x01"; break;
+                case INPUT_PS: $input = "\x03\x0e\x01"; break;
                 // ff   aa   00   03   01   00   03   06   02   01 => TV
-                case 'TV': $input = "\x06\x02\x01"; break;
+                case INPUT_TV: $input = "\x06\x02\x01"; break;
                 // ff   aa   00   03   01   00   03   07   06   01 => CD
-                case 'CD': $input = "\x07\x06\x01"; break;
+                case INPUT_CD: $input = "\x07\x06\x01"; break;
                 // ff   aa   00   03   01   00   03   0b   06   01 => DVD
-                case 'DVD': $input = "\x0b\x06\x01"; break;
+                case INPUT_DVD: $input = "\x0b\x06\x01"; break;
                 // ff   aa   00   03   01   00   03   0f   12   01 => AUX
-                case 'AUX': $input = "\x0f\x12\x01"; break;
+                case INPUT_AUX: $input = "\x0f\x12\x01"; break;
                 // ff   aa   00   03   01   00   03   17   13   01 => NET
-                case 'NET': $input = "\x17\x13\x01"; break;
+                case INPUT_NET: $input = "\x17\x13\x01"; break;
                 // ff   aa   00   03   01   00   03   15   14   01 => BT
-                case 'BT': $input = "\x15\x14\x01"; break;
+                case INPUT_BT: $input = "\x15\x14\x01"; break;
                 default: return;
             }
             $data = $this->MakePacket(0x03, 0x01, $input);
 
             // when switching to another input directly the InputSource is not changed to "NONE".. 
-            if($mode == 1 && !($value == 'NET' || $value == 'BT')) {
+            if($mode == 1 && !($value == INPUT_NET || $value == INPUT_BT)) {
                 $this->UpdateMode(0);
             }
         } else if($ident === 'Volume') {
@@ -544,7 +512,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->SetValue("Duration", 0);
         $this->SetValue("Position", 0);
         $this->SetValue('State', 'stop');
-        $this->SetValue('Input', 'NET');
+        $this->SetValue('Input', INPUT_NET);
         $this->SetValue('PowerState', false);
     }
 }
