@@ -414,6 +414,11 @@ class CantonSmartSpeakerDevice extends IPSModule
                 default: return;
             }
             $data = $this->MakePacket(0x03, 0x01, $input);
+
+            // when switching to another input directly the InputSource is not changed to "NONE".. 
+            if($mode == 1 && !($value == 'NET' || $value == 'BT')) {
+                $this->UpdateMode(0);
+            }
         } else if($ident === 'Volume') {
             if($mode == 0) {
                 $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
