@@ -249,10 +249,10 @@ class CantonSmartSpeakerDevice extends IPSModule
                     $this->SendDebug('Processing Packet', bin2hex(substr($data, 0, 7 + $len)), 0);
 
                     // power
-                    if($property == 0x06) {
+                    if($property == 0x06 && $type == 1) {
                         $this->SetValue('PowerState', ord($data[7]));
                     // input
-                    } else if($property == 0x03) {
+                    } else if($property == 0x03 && $type == 1) {
                         $value = ord($data[7]);
                         // ff   aa   00   03   01   00   03   01   10   01 => ATV
                         // ff   aa   00   03   01   00   03   02   04   01 => SAT
@@ -281,7 +281,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                             return '';
                         }
                     // volume
-                    } else if($property = 0x0c) {
+                    } else if($property = 0x0c && $type == 1) {
                         if($len == 2) {
                             $this->SetValue('Volume', ceil((ord($data[7]) / 70) * 100));
                         }
