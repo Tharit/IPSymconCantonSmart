@@ -386,63 +386,57 @@ class CantonSmartSpeakerDevice extends IPSModule
     public function RequestAction($ident, $value)
     {
         $mode = $this->GetMode();
-        if($mode == 0) {
-            if($ident === 'Input') {
-                switch($value) {
-                    // ff   aa   00   03   01   00   03   01   10   01 => ATV
-                    case 'ATV': $input = "\x01\x10\x01"; break;
-                    // ff   aa   00   03   01   00   03   02   04   01 => SAT
-                    case 'SAT': $input = "\x02\x04\x01"; break;
-                    // ff   aa   00   03   01   00   03   03   0e   01 => PS
-                    case 'PS': $input = "\x03\x0e\x01"; break;
-                    // ff   aa   00   03   01   00   03   06   02   01 => TV
-                    case 'TV': $input = "\x06\x02\x01"; break;
-                    // ff   aa   00   03   01   00   03   07   06   01 => CD
-                    case 'CD': $input = "\x07\x06\x01"; break;
-                    // ff   aa   00   03   01   00   03   0b   06   01 => DVD
-                    case 'DVD': $input = "\x0b\x06\x01"; break;
-                    // ff   aa   00   03   01   00   03   0f   12   01 => AUX
-                    case 'AUX': $input = "\x0f\x12\x01"; break;
-                    // ff   aa   00   03   01   00   03   17   13   01 => NET
-                    case 'NET': $input = "\x17\x13\x01"; break;
-                    // ff   aa   00   03   01   00   03   15   14   01 => BT
-                    case 'BT': $input = "\x15\x14\x01"; break;
-                    default: return;
-                }
-                $data = $this->MakePacket(0x03, 0x01, $input);
-            } else if($ident === 'Volume') {
-                $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
-            } else if($ident === 'PowerState') {
-                $data = $this->MakePacket(0x06, 0x01, $value ? "\x01" : "\x00");
-            }
+        $forceDevice = false;
 
+        if($ident === 'Input') {
+            $forceDevice = true;
+            switch($value) {
+                // ff   aa   00   03   01   00   03   01   10   01 => ATV
+                case 'ATV': $input = "\x01\x10\x01"; break;
+                // ff   aa   00   03   01   00   03   02   04   01 => SAT
+                case 'SAT': $input = "\x02\x04\x01"; break;
+                // ff   aa   00   03   01   00   03   03   0e   01 => PS
+                case 'PS': $input = "\x03\x0e\x01"; break;
+                // ff   aa   00   03   01   00   03   06   02   01 => TV
+                case 'TV': $input = "\x06\x02\x01"; break;
+                // ff   aa   00   03   01   00   03   07   06   01 => CD
+                case 'CD': $input = "\x07\x06\x01"; break;
+                // ff   aa   00   03   01   00   03   0b   06   01 => DVD
+                case 'DVD': $input = "\x0b\x06\x01"; break;
+                // ff   aa   00   03   01   00   03   0f   12   01 => AUX
+                case 'AUX': $input = "\x0f\x12\x01"; break;
+                // ff   aa   00   03   01   00   03   17   13   01 => NET
+                case 'NET': $input = "\x17\x13\x01"; break;
+                // ff   aa   00   03   01   00   03   15   14   01 => BT
+                case 'BT': $input = "\x15\x14\x01"; break;
+                default: return;
+            }
+            $data = $this->MakePacket(0x03, 0x01, $input);
+        } else if($ident === 'Volume') {
+            if($mode == 0) {
+                $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
+            } else {
+                $data = "\x00\x00\x02\x40\x00\x00\x0\x00\x02\x00$value";
+            }
+        } else if($ident === 'PowerState') {
+            $forceDevice = true;
+            $data = $this->MakePacket(0x06, 0x01, $value ? "\x01" : "\x00");
+        }
+
+        if($forceDevice && $mode != 0) {
+            $this->SendDebug('Sending Extra Data', bin2hex($data), 0);
+        
+            $parentID = $this->GetConnectionID();
+            $host = IPS_GetProperty($parentID, 'Host');
+            $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+            socket_connect($sock, $host, 50006);
+            socket_send($sock, $data, strlen($data), 0);
+            socket_close($sock);
+        } else {
             $this->SendDebug('Sending Data', bin2hex($data), 0);
             CSCK_SendText($this->GetConnectionID(), $data);
-        } else {
-            $extra = false;
-            if($ident === 'Volume') {
-                $data = "\x00\x00\x02\x40\x00\x00\x0\x00\x02\x00$value";
-            } else if($ident === 'Volume') {
-                $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
-                $extra = true;
-            } else if($ident === 'PowerState') {
-                $data = $this->MakePacket(0x06, 0x01, $value ? "\x01" : "\x00");
-                $extra = true;
-            }
-            if($extra) {
-                $this->SendDebug('Sending Extra Data', bin2hex($data), 0);
-            
-                $parentID = $this->GetConnectionID();
-                $host = IPS_GetProperty($parentID, 'Host');
-                $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-                socket_connect($sock, $host, 50006);
-                socket_send($sock, $data, strlen($data), 0);
-                socket_close($sock);
-            } else {
-                $this->SendDebug('Sending Data', bin2hex($data), 0);
-                CSCK_SendText($this->GetConnectionID(), $data);
-            }
         }
+        
     }
 
     //------------------------------------------------------------------------------------
