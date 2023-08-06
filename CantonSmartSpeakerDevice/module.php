@@ -528,6 +528,5 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->SetValue("Duration", 0);
         $this->SetValue("Position", 0);
         $this->SetValue('State', 'stop');
-        $this->SetValue('PowerState', false);
     }
 }
