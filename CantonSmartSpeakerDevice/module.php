@@ -105,6 +105,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         ($mode == 1 && $port != 7777)) {
             $interval = $this->GetTimerInterval('Reconfigure');
             if($interval !== 1000) {
+                $this-MUSetBuffer('SkipData', true);
                 $this->SetTimerInterval('Reconfigure', 1000);
                 $this->SendDebug('Mode change', 'Fixing mode...', 0);
             }
@@ -167,7 +168,10 @@ class CantonSmartSpeakerDevice extends IPSModule
 
                 $this->SendDebug('CHANGESTATUS', json_encode($Data), 0);
 
-                $this->ValidateMode();
+                if(!$this->ValidateMode()) {
+                    $this->SetValue("Connected", false);
+                    return;
+                }
 
                 // if parent became active: connect
                 if ($Data[0] === IS_ACTIVE) {
@@ -358,6 +362,11 @@ class CantonSmartSpeakerDevice extends IPSModule
     }
 
     public function ReceiveData($data) {
+        if($this->MUGetBuffer('SkipData')) {
+            $this->SendDebug('Receive Data', 'Waiting to fix mode, skipping packet', 0);
+            return;
+        }
+
         // unpack & decode data
         $data = json_decode($data);
         $data = utf8_decode($data->Buffer);
@@ -411,6 +420,28 @@ class CantonSmartSpeakerDevice extends IPSModule
             CSCK_SendText($this->GetConnectionID(), $data);
         } else {
             // @TODO
+            if($ident === 'Volume') {
+                $data = "\x00\x00\x02\x40\x00\x00\x0\x00\x02\x00$value";
+            } else if($ident === 'Volume') {
+                $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
+                $extra = true;
+            } else if($ident === 'PowerState') {
+                $data = $this->MakePacket(0x06, 0x01, $value ? "\x01" : "\x00");
+                $extra = true;
+            }
+            if($extra) {
+                $this->SendDebug('Sending Extra Data', bin2hex($data), 0);
+            
+                $parentID = $this->GetConnectionID();
+                $host = IPS_GetProperty($parentID, 'Host');
+                $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+                socket_connect($sock, $host, 50006);
+                socket_send($sock, $data, strlen($data), 0);
+                socket_close($sock);
+            } else {
+                $this->SendDebug('Sending Data', bin2hex($data), 0);
+                CSCK_SendText($this->GetConnectionID(), $data);
+            }
         }
     }
 
@@ -446,7 +477,8 @@ class CantonSmartSpeakerDevice extends IPSModule
     //------------------------------------------------------------------------------------
     private function ResetState() {
         $this->MUSetBuffer('Data', '');
-                    
+        $this->MUSetBuffer('SkipData', false);
+
         $this->SetValue("Artist", '-');
         $this->SetValue("Album", '-');
         $this->SetValue("Title", '-');
