@@ -85,7 +85,17 @@ class CantonSmartSpeakerDevice extends IPSModule
         $targetPort = $newMode == 0 ? 50006 : 7777;
         if($port == $targetPort) return false;
 
+        $open = IPS_GetProperty($parentID, 'Open');
+
+        if($open) {
+            IPS_SetProperty($parentID, 'Open', false);
+            IPS_ApplyChanges($parentID);
+        }
+        
         IPS_SetProperty($parentID, 'Port', $targetPort);
+        if($open) {
+            IPS_SetProperty($parentID, 'Open', true);
+        }
         IPS_ApplyChanges($parentID);
 
         return true;
