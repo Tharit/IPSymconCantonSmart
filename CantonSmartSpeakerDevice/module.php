@@ -55,7 +55,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SendDebug('Module Create', 'Already connected', 0);
         }
 
-        $this->MUSetBuffer('mode', 0);
+        $this->UpdateMode(0);
     }
 
     private function GetMode() {
