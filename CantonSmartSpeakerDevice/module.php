@@ -419,7 +419,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SendDebug('Sending Data', bin2hex($data), 0);
             CSCK_SendText($this->GetConnectionID(), $data);
         } else {
-            // @TODO
+            $extra = false;
             if($ident === 'Volume') {
                 $data = "\x00\x00\x02\x40\x00\x00\x0\x00\x02\x00$value";
             } else if($ident === 'Volume') {
