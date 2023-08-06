@@ -21,7 +21,7 @@ function MakePacket($property, $type, $value = "") {
 
 var_dump(bin2hex(MakePacket(0x0c, 0x01, "\x23")));
 return;
-*/
+
 $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 socket_connect($sock, '10.0.125.96', 7777);
 
@@ -33,7 +33,7 @@ socket_send($sock, $buffer, 23,0);
 //$buffer2 = "\x00\x00\x02\x33\x00\x00\x00\x00\x01\x002";
 //$buffer2 = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";//STOP";
 //$buffer2 = "\x00\x00\x02\x33\x00\x00\x00\x00\x01\x00\x33";
-            socket_send($sock, $buffer2, 10,0);
+            //socket_send($sock, $buffer2, 10,0);
 
 while(true) {
     $bytes = socket_recv($sock, $buffer, 1024, 0);
