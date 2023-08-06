@@ -28,10 +28,10 @@ socket_connect($sock, '10.0.125.96', 7777);
 $buffer = "\x00\x00\x02\x03\x00\x00\x00\x00\x0d\x0010.0.89.246";
 
 socket_send($sock, $buffer, 23,0);
-$bytes = socket_recv($sock, $buffer, 1024, 0);
+//$bytes = socket_recv($sock, $buffer, 1024, 0);
 //$buffer2 = "\x00\x00\x02\x28\x00\x00\x0\x00\x00\x00";
 //$buffer2 = "\x00\x00\x02\x33\x00\x00\x00\x00\x01\x002";
-$buffer2 = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";//STOP";
+//$buffer2 = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";//STOP";
 //$buffer2 = "\x00\x00\x02\x33\x00\x00\x00\x00\x01\x00\x33";
             socket_send($sock, $buffer2, 10,0);
 

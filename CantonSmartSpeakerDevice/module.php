@@ -150,7 +150,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SendDebug('Sending Data', bin2hex($data), 0);
             CSCK_SendText($this->GetConnectionID(), $data);
         } else {
-            $buffer = "\x00\x00\x02\x03\x00\x00\x00\x00\x0d\x0010.0.0.11\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
+            $buffer = "\x00\x00\x02\x03\x00\x00\x00\x00\x0d\x0010.0.0.11";
             CSCK_SendText($this->GetConnectionID(), $buffer);
             //$data = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
             //CSCK_SendText($this->GetConnectionID(), $data);
@@ -258,8 +258,8 @@ class CantonSmartSpeakerDevice extends IPSModule
                 $cmd = unpack('n', $data, 3)[1];
                 $len = unpack('n', $data, 8)[1];
 
-                // device status notification
-                if($cmd == 112 && $type == 2) {
+                // after login or on device status notification
+                if(($cmd == 3 && $type == 2) || ($cmd == 112 && $type == 2)) {
                     $data2 = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
                     CSCK_SendText($this->GetConnectionID(), $data2);
                 // device status data
