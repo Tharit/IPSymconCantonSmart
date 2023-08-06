@@ -74,7 +74,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $parentID = $this->GetConnectionID();
         $port = IPS_GetProperty($parentID, 'Port');
 
-        $targetPort = $mode == 0 ? 50006 : 7777;
+        $targetPort = $newMode == 0 ? 50006 : 7777;
         if($port == $targetPort) return;
 
         if (IPS_GetProperty($parentID, 'Open')) {
@@ -145,8 +145,10 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SendDebug('Sending Data', bin2hex($data), 0);
             CSCK_SendText($this->GetConnectionID(), $data);
         } else {
-            $data = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
+            $buffer = "\x00\x00\x02\x03\x00\x00\x00\x00\x0d\x0010.0.0.11\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
             CSCK_SendText($this->GetConnectionID(), $data);
+            //$data = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
+            //CSCK_SendText($this->GetConnectionID(), $data);
         }
     }
 
