@@ -112,10 +112,11 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         parent::ApplyChanges();
 
-        if (!IPS_GetProperty($parentID, 'Open')) {
+        /*if (!IPS_GetProperty($parentID, 'Open')) {
             IPS_SetProperty($parentID, 'Open', true);
             @IPS_ApplyChanges($parentID);
         }
+        */
     }
 
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
