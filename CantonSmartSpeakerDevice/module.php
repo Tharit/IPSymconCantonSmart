@@ -36,15 +36,15 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         // profiles
         $this->RegisterProfileIntegerEx('CantonSmart.Input', 'Database', '', '', [
-            [0, 'ATV',  '', INPUT_ATV],
-            [1, 'SAT',  '', INPUT_SAT],
-            [2, 'PS',  '', INPUT_PS],
-            [3, 'TV',  '', INPUT_TV],
-            [4, 'CD',  '', INPUT_CD],
-            [5, 'DVD',  '', INPUT_DVD],
-            [6, 'AUX',  '', INPUT_AUX],
-            [7, 'NET',  '', INPUT_NET],
-            [8, 'BT',  '', INPUT_BT]
+            [INPUT_ATV, 'ATV',  '', -1],
+            [INPUT_SAT, 'SAT',  '', -1],
+            [INPUT_PS, 'PS',  '', -1],
+            [INPUT_TV, 'TV',  '', -1],
+            [INPUT_CD, 'CD',  '', -1],
+            [INPUT_DVD, 'DVD',  '', -1],
+            [INPUT_AUX, 'AUX',  '', -1],
+            [INPUT_NET, 'NET',  '', -1],
+            [INPUT_BT, 'BT',  '', -1]
         ]);
 
         // variables
