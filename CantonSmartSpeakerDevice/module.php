@@ -342,11 +342,11 @@ class CantonSmartSpeakerDevice extends IPSModule
                 // playback status
                 } else if($cmd == 51 && $type == 2) {
                     $data2 = substr($data, 10, $len);
-                    if(ord($data2) == 30) {
+                    if(ord($data2) == 0x30) {
                         $this->SetValue('State', 'play');
-                    } else if(ord($data2) == 31) {
+                    } else if(ord($data2) == 0x31) {
                         $this->SetValue('State', 'stop');
-                    } else if(ord($data2) == 32) {
+                    } else if(ord($data2) == 0x32) {
                         $this->SetValue('State', 'pause');
                     }
                 // playback position
