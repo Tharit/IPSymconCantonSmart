@@ -75,7 +75,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $parentID = $this->GetConnectionID();
         $port = IPS_GetProperty($parentID, 'Port');
 
-        $targetPort = $newMode == 0 ? 50006 : 7777;
+        $targetPort = $this->GetMode() == 0 ? 50006 : 7777;
         if($port == $targetPort) return false;
 
         $open = IPS_GetProperty($parentID, 'Open');
@@ -173,8 +173,6 @@ class CantonSmartSpeakerDevice extends IPSModule
         } else {
             $buffer = "\x00\x00\x02\x03\x00\x00\x00\x00\x0d\x0010.0.0.11";
             CSCK_SendText($this->GetConnectionID(), $buffer);
-            //$data = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
-            //CSCK_SendText($this->GetConnectionID(), $data);
         }
     }
 
@@ -310,7 +308,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SetValue('Position', 0);
                         $this->SetValue('Album', dashDefault($json['Album']));
                         $this->SetValue('Artist', dashDefault($json['Artist']));
-                        $this->SetValue('Title', dashDefault($json['CurrentRadioStation']));
+                        $this->SetValue('Title', dashDefault($json['TrackName']));
                         $this->SetValue('Cover', $json['coverArtUrl']);
                         $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
                     }
