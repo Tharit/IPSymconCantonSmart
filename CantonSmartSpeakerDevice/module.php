@@ -318,6 +318,46 @@ class CantonSmartSpeakerDevice extends IPSModule
                         if($json['InputSource'] == 'NONE') {
                             $this->UpdateMode(0);
                             return '';
+                        } else {
+                            $this->SendDebug('Validating input', 'Checking...', 0);
+                            // check input is still correct
+                            $parentID = $this->GetConnectionID();
+                            $host = IPS_GetProperty($parentID, 'Host');
+                            $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+                            socket_connect($sock, $host, 50006);
+                            $data = $this->MakePacket(0x03, 0x02);
+                            socket_send($sock, $data, strlen($data), 0);
+                            $bytes = socket_recv($sock, $buffer, 1024, 0);
+                            $this->SendDebug('Validating input', bin2hex($buffer), 0);
+                            if($bytes == 10) {
+                                $value = ord($buffer[7]);
+                                // ff   aa   00   03   01   00   03   01   10   01 => ATV
+                                // ff   aa   00   03   01   00   03   02   04   01 => SAT
+                                // ff   aa   00   03   01   00   03   03   0e   01 => PS
+                                // ff   aa   00   03   01   00   03   06   02   01 => TV
+                                // ff   aa   00   03   01   00   03   07   06   01 => CD
+                                // ff   aa   00   03   01   00   03   0b   06   01 => DVD
+                                // ff   aa   00   03   01   00   03   0f   12   01 => AUX
+                                // ff   aa   00   03   01   00   03   17   13   01 => NET
+                                // ff   aa   00   03   01   00   03   15   14   01 => BT
+                                switch($value) {
+                                    case 0x01: $value = 'ATV'; break;
+                                    case 0x02: $value = 'SAT'; break;
+                                    case 0x03: $value = 'PS'; break;
+                                    case 0x06: $value = 'TV'; break;
+                                    case 0x07: $value = 'CD'; break;
+                                    case 0x0b: $value = 'DVD'; break;
+                                    case 0x0f: $value = 'AUX'; break;
+                                    default: 
+                                    case 0x17: $value = 'NET'; break;
+                                    case 0x15: $value = 'BT'; break;
+                                }
+                                if(!($value == 'NET' || $value == 'BT')) {
+                                    $this->UpdateMode(0);
+                                    return '';
+                                }
+                            }
+                            socket_close($sock);
                         }
 
                         $this->SendDebug('Processing JSON Value', $data2, 0);
@@ -502,6 +542,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->SetValue("Source", "-");
         $this->SetValue("Application", "-");
         $this->SetValue("Duration", 0);
+        $this->SetValue("Position", 0);
         $this->SetValue('State', 'stop');
         $this->SetValue('Input', 'NET');
         $this->SetValue('PowerState', false);
