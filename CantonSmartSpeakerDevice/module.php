@@ -315,10 +315,14 @@ class CantonSmartSpeakerDevice extends IPSModule
                     if($json && $json['Title'] == 'DeviceStatusUpdate') {
                         $json = $json['CONTENTS'];
                         
+                        $state = 'stop';
+                        if($json['PlayStatus'] == 'PLAY') $state = 'play';
+                        if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
+
                         if($json['InputSource'] == 'NONE') {
                             $this->UpdateMode(0);
                             return '';
-                        } else {
+                        } else if($state != 'play') {
                             $this->SendDebug('Validating input', 'Checking...', 0);
                             // check input is still correct
                             $parentID = $this->GetConnectionID();
@@ -365,10 +369,6 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $powerState = $json['PowerStatus'] == 'ON';
                         $this->SetValue('PowerState', $powerState);
                         $this->SetValue('Volume', $json['Volume']);
-
-                        $state = 'stop';
-                        if($json['PlayStatus'] == 'PLAY') $state = 'play';
-                        if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
 
                         $this->SetValue('State', $state);
                         $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'scdn.co') == false ? '' : 'Spotify'));
