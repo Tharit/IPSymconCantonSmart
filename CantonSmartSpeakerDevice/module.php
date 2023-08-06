@@ -244,7 +244,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                 // ff   aa   00   03   01   00   03
                 $len = unpack('n', $data, 5)[1];
                 $property = unpack('n', $data, 2)[1];
-                $type = $data[4];
+                $type = ord($data[4]);
                 if(strlen($data) >= 7 + $len) {
                     $this->SendDebug('Processing Packet', bin2hex(substr($data, 0, 7 + $len)), 0);
 
