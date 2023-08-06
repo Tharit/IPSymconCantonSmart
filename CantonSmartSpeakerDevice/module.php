@@ -344,7 +344,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             //$data = $this->ReceiveDataStream($data);
         }
 
-        //$this->MUSetBuffer('Data', $data);
+        $this->MUSetBuffer('Data', $data);
     }
 
     public function RequestAction($ident, $value)
