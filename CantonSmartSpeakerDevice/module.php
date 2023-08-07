@@ -10,12 +10,6 @@ define('INPUT_AUX', 0x0f);
 define('INPUT_NET', 0x17);
 define('INPUT_BT', 0x15);
 
-/*
-
-@TODO: change input to int variable / predefined profile?
-@TODO: open second socket connection to streaming service on 7777
-
-*/
 require_once(__DIR__ . '/../libs/ModuleUtilities.php');
 
 function dashDefault($value) {
@@ -74,6 +68,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->ResetState();
 
         $this->RegisterTimer('Reconfigure', 0, 'CantonSmart_Reconfigure($_IPS[\'TARGET\']);');
+        $this->RegisterTimer('CancelSwitch', 0, 'CantonSmart_Reconfigure($_IPS[\'TARGET\']);');
 
         // if this is not the initial creation there might already be a parent
         if($this->UpdateConnection() && $this->HasActiveParent()) {
@@ -91,6 +86,13 @@ class CantonSmartSpeakerDevice extends IPSModule
         return $this->MUGetBuffer('mode');
     }
 
+    public function CancelSwitch() {
+        $this->SendDebug('CancelSwitch', 'Switching mode failed...', 0);
+        $this->SetTimerInterval('CancelSwitch', 0);
+
+        $this->SetValue("Connected", false);
+    }
+    
     public function Reconfigure() {
         $this->SendDebug('Reconfigure', 'Reconfiguring socket...', 0);
         $this->SetTimerInterval('Reconfigure', 0);
@@ -148,6 +150,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SendDebug('Mode init', 'Initializing mode to ' . $newMode, 0);
         } else {
             $this->SendDebug('Mode change', 'Changing mode from ' . $mode . ' to ' . $newMode, 0);
+            $this->MUSetBuffer('SkipData', true);
         }
 
         $this->SetTimerInterval('Reconfigure', 1000);
@@ -188,6 +191,8 @@ class CantonSmartSpeakerDevice extends IPSModule
                 $this->UpdateConnection();
                 break;
             case IM_CHANGESTATUS:
+                $skip = $this->MUGetBuffer('SkipData');
+
                 // reset state
                 $this->ResetState();
 
@@ -200,8 +205,11 @@ class CantonSmartSpeakerDevice extends IPSModule
 
                 // if parent became active: connect
                 if ($Data[0] === IS_ACTIVE) {
+                    $this->SetTimerInterval("CancelSwitch", 0);
                     $this->SetValue("Connected", true);
                     $this->Connect();
+                } else if($skip) {
+                    $this->SetTimerInterval("CancelSwitch", 1000);
                 } else {
                     $this->SetValue("Connected", false);
                 }
@@ -326,26 +334,17 @@ class CantonSmartSpeakerDevice extends IPSModule
                             return '';
                         } else if($state != 'play') {
                             $this->SendDebug('Validating input', 'Checking...', 0);
-                            // check input is still correct
-                            $parentID = $this->GetConnectionID();
-                            $host = IPS_GetProperty($parentID, 'Host');
-                            $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-                            socket_connect($sock, $host, 50006);
-                            $data = $this->MakePacket(0x03, 0x02);
-                            socket_send($sock, $data, strlen($data), 0);
-                            $bytes = socket_recv($sock, $buffer, 1024, 0);
-                            $this->SendDebug('Validating input', bin2hex($buffer), 0);
-                            if($bytes == 10) {
-                                $value = ord($buffer[7]);
-                                if(!($value == INPUT_NET || $value == INPUT_BT)) {
+                            
+                            $input = $this->FetchInput();
+                            if($input != false) {
+                                if(!($input == INPUT_NET || $input == INPUT_BT)) {
                                     $this->UpdateMode(0);
                                     return '';
                                 }
                                 if($input != $this->GetValue("Input")) {
-                                    $this->SetValue("Input", $value);
+                                    $this->SetValue("Input", $input);
                                 }
                             }
-                            socket_close($sock);
                         }
 
                         $this->SendDebug('Processing JSON Value', $data2, 0);
@@ -455,6 +454,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                 $this->UpdateMode(0);
             }
         } else if($ident === 'Volume') {
+            if($value < 0 || $value > 100) return;
             if($mode == 0) {
                 $data = $this->MakePacket(0x0c, 0x01, chr(round(($value/100)*70)));
             } else {
@@ -463,7 +463,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         } else if($ident === 'PowerState') {
             $forceDevice = true;
             $data = $this->MakePacket(0x06, 0x01, $value ? "\x01" : "\x00");
-        }
+        } else return;
 
         if($forceDevice && $mode != 0) {
             $this->SendDebug('Sending Extra Data', bin2hex($data), 0);
@@ -479,6 +479,49 @@ class CantonSmartSpeakerDevice extends IPSModule
             CSCK_SendText($this->GetConnectionID(), $data);
         }
         
+    }
+
+    private function FetchInput() {
+        // check input is still correct
+        $parentID = $this->GetConnectionID();
+        $host = IPS_GetProperty($parentID, 'Host');
+        $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 1, "usec" => 0));
+        $res = socket_connect($sock, $host, 50006);
+        if(!$res) {
+            $this->SendDebug('Fetch input', 'Failed to connect', 0);
+            return false;
+        }
+        
+        $data = $this->MakePacket(0x03, 0x02);
+        socket_send($sock, $data, strlen($data), 0);
+        
+        $cnt = 0;
+        $buffer = '';
+        while($cnt++ < 5) {
+            $bytes = socket_recv($sock, $frag, 1024, 0);
+            if(!$bytes) break;
+            $buffer .= $frag;
+
+            $this->SendDebug('Fetch input', bin2hex($buffer), 0);
+        
+            while(strlen($buffer) >= 10) {
+                $property = unpack('n', $buffer, 2)[1];
+                if($property == 0x03) break 2;
+                if(strlen($buffer) > 10) $buffer = substr($buffer, 10);
+            }
+        }
+
+        socket_close($sock);
+
+        if(strlen($buffer) >= 10) {
+            $value = ord($buffer[7]);
+            return $value;
+        } else {
+            $this->SendDebug('Fetch input', 'Failed to receive response', 0);
+        }
+        
+        return false;
     }
 
     //------------------------------------------------------------------------------------
