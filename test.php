@@ -1,4 +1,6 @@
 <?php
+echo null || 0;
+
 /*
 var_dump(json_decode("{\"a\":5}\n"));
 
