@@ -270,7 +270,6 @@ class CantonSmartSpeakerDevice extends IPSModule
 
                         // if streaming is started while device is off, and on a non-streaming input there is no power or input packages received...
                         // we just get the JSON
-                        $json = $json['CONTENTS'];
                         if($json['PlayStatus'] == 'PLAY') {
                             $this->UpdateMode(1);
                         }
