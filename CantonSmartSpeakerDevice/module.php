@@ -247,6 +247,36 @@ class CantonSmartSpeakerDevice extends IPSModule
         return "\xff\xaa\x00$property$type$length$value";
     }
 
+    private function UpdateMetaData($json) {
+        $powerState = $json['PowerStatus'] == 'ON';
+        $this->SetValue('PowerState', $powerState);
+        $this->SetValue('Volume', $json['Volume']);
+
+        if($this->GetValue("Input") == INPUT_NET && $powerState) {
+            $state = 'stop';
+            if($json['PlayStatus'] == 'PLAY') $state = 'play';
+            if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
+
+            $this->SetValue('State', $state);
+            $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'scdn.co') == false ? '' : 'Spotify'));
+            $this->SetValue('Position', 0);
+            $this->SetValue('Album', dashDefault($json['Album']));
+            $this->SetValue('Artist', dashDefault($json['Artist']));
+            $this->SetValue('Title', dashDefault($json['TrackName']));
+            $this->SetValue('Cover', $json['coverArtUrl']);
+            $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+        } else {
+            $this->SetValue('State', 'stop');
+            $this->SetValue("Application", "-");
+            $this->SetValue("Position", 0);
+            $this->SetValue("Album", '-');
+            $this->SetValue("Artist", '-');
+            $this->SetValue("Title", '-');
+            $this->SetValue("Cover", "");
+            $this->SetValue("Duration", 0);
+        }
+    }
+
     public function ReceiveDataDevice($data) {
         while(strlen($data) > 0) {
             // find start of packet
@@ -264,15 +294,28 @@ class CantonSmartSpeakerDevice extends IPSModule
                     if($json['Title'] == 'DeviceStatusUpdate') {
                         $json = $json['CONTENTS'];
 
-                        $powerState = $json['PowerStatus'] == 'ON';
-                        $this->SetValue('PowerState', $powerState);
-                        $this->SetValue('Volume', $json['Volume']);
+                        $state = 'stop';
+                        if($json['PlayStatus'] == 'PLAY') $state = 'play';
+                        if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
 
                         // if streaming is started while device is off, and on a non-streaming input there is no power or input packages received...
                         // we just get the JSON
-                        if($json['PlayStatus'] == 'PLAY') {
-                            $this->UpdateMode(1);
+                        if($state == 'PLAY') {
+                            $this->SendDebug('Validating input', 'Checking...', 0);
+                            
+                            $input = $this->FetchInput();
+                            if($input != false) {
+                                if($input == INPUT_NET || $input == INPUT_BT) {
+                                    $this->UpdateMode(1);
+                                    return '';
+                                }
+                                if($input != $this->GetValue("Input")) {
+                                    $this->SetValue("Input", $input);
+                                }
+                            }
                         }
+
+                        $this->UpdateMetaData($json);
                     }
                 }
                 $data = '';
@@ -355,29 +398,7 @@ class CantonSmartSpeakerDevice extends IPSModule
 
                         $this->SendDebug('Processing JSON Value', $data2, 0);
 
-                        $powerState = $json['PowerStatus'] == 'ON';
-                        $this->SetValue('PowerState', $powerState);
-                        $this->SetValue('Volume', $json['Volume']);
-
-                        if($this->GetValue("Input") == INPUT_NET && $powerState) {
-                            $this->SetValue('State', $state);
-                            $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'scdn.co') == false ? '' : 'Spotify'));
-                            $this->SetValue('Position', 0);
-                            $this->SetValue('Album', dashDefault($json['Album']));
-                            $this->SetValue('Artist', dashDefault($json['Artist']));
-                            $this->SetValue('Title', dashDefault($json['TrackName']));
-                            $this->SetValue('Cover', $json['coverArtUrl']);
-                            $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
-                        } else {
-                            $this->SetValue('State', 'stop');
-                            $this->SetValue("Application", "-");
-                            $this->SetValue("Position", 0);
-                            $this->SetValue("Album", '-');
-                            $this->SetValue("Artist", '-');
-                            $this->SetValue("Title", '-');
-                            $this->SetValue("Cover", "");
-                            $this->SetValue("Duration", 0);
-                        }
+                        $this->UpdateMetaData($json);
                     }
                 // playback status
                 } else if($cmd == 51 && $type == 2) {
