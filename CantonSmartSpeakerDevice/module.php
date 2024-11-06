@@ -296,10 +296,12 @@ class CantonSmartSpeakerDevice extends IPSModule
                     $this->SendDebug('Processing JSON Packet', json_encode($json), 0);
                     if($json['Title'] == 'DeviceStatusUpdate') {
                         $json = $json['CONTENTS'];
-                        /**
-                            nothing to do here.. we handle the streaming metadata on the other connection
-                            streaming state sometimes "lags behind" anyway.. e.g. it might be "playing" still after switching to another input
-                         */
+                        
+                        if($json['PlayStatus'] === 'PLAY') {
+                            if($this->ValidateState()) {
+                                return '';
+                            }
+                        }
                     }
                     $data = substr($data, $res['length']);
                 }
