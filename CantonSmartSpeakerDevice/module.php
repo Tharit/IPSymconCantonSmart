@@ -378,7 +378,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                     $data2 = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
                     CSCK_SendText($this->GetConnectionID(), $data2);
                 // device status data
-                } else if($cmd == 112 && $type == 1) {
+                } else if(($cmd == 42 && $type == 2) || ($cmd == 45 && $type === 2)) {
                     $data2 = substr($data, 10, $len);
                     $json = @json_decode($data2, true);
                     if($json && $json['Title'] == 'PlayView') {
