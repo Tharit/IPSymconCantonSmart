@@ -547,7 +547,8 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SendDebug('Fetch input', 'Failed to connect', 0);
             return false;
         }
-        
+
+        IPS_Sleep(100);
         $data = $this->MakePacket(0x03, 0x02);
         socket_send($sock, $data, strlen($data), 0);
         
@@ -567,7 +568,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         
             while($buffer[0] == '{') {
                 $res = $this->parseJSON($data);
-                if(!$res) continue;
+                if(!$res) continue 2;
                 $this->SendDebug('Fetch input debug', 'Detected json, skipping...', 0);
                 $length = $res['length'];
                 if($buffer[$length] === "\n") $length++;
