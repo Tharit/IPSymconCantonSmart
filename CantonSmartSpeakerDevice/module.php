@@ -553,10 +553,12 @@ class CantonSmartSpeakerDevice extends IPSModule
         
         $cnt = 0;
         $buffer = '';
-        while($cnt++ < 5) {
+        while($cnt < 5) {
             $bytes = socket_recv($sock, $frag, 1024, 0);
             if(!$bytes) {
-                $this->SendDebug('Fetch input debug', 'Received nothing', 0);
+                $this->SendDebug('Fetch input debug', 'Received nothing, waiting...', 0);
+                IPS_Sleep(100);
+                $cnt++;
                 break;
             }
             $buffer .= $frag;
@@ -566,6 +568,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             if($buffer[0] == '{') {
                 $res = $this->parseJSON($data);
                 if(!$res) continue;
+                $this->SendDebug('Fetch input debug', 'Detected json, skipping...', 0);
                 $buffer = substr($buffer, $res['length']);
             }
 
