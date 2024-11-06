@@ -75,7 +75,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SendDebug('Module Create', 'Already connected', 0);
             $parentID = $this->GetConnectionID();
             $port = IPS_GetProperty($parentID, 'Port');
-            $this->UpdateMode($port == 50006 ? 0 : 1);
+            $this->UpdateMode(0);//$port == 50006 ? 0 : 1);
             $this->Connect();
         } else {
             $this->UpdateMode(0);
@@ -508,6 +508,7 @@ class CantonSmartSpeakerDevice extends IPSModule
     }
 
     private function ValidateInput() {
+        return false;
         $this->SendDebug('Validating input', 'Checking...', 0);
         $input = $this->FetchInput();
         if($input != false) {
