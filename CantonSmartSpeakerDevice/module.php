@@ -379,9 +379,9 @@ class CantonSmartSpeakerDevice extends IPSModule
                 } else if($cmd == 112 && $type == 1) {
                     $data2 = substr($data, 10, $len);
                     $json = @json_decode($data2, true);
-                    if($json && $json['Title'] == 'DeviceStatusUpdate') {
-                        $json = $json['CONTENTS'];
-                        
+                    if($json && $json['Title'] == 'PlayView') {
+                        $json = $json['Window CONTENTS'];
+                        /*
                         $state = 'stop';
                         if($json['PlayStatus'] == 'PLAY') $state = 'play';
                         if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
@@ -403,8 +403,9 @@ class CantonSmartSpeakerDevice extends IPSModule
                                 }
                             }
                         }
-
+*/
                         $this->SendDebug('Processing JSON Value', $data2, 0);
+                        
 
                         $this->UpdateMetaData($json);
                     }
