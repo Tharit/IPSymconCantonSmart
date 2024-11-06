@@ -75,7 +75,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SendDebug('Module Create', 'Already connected', 0);
             $parentID = $this->GetConnectionID();
             $port = IPS_GetProperty($parentID, 'Port');
-            $this->UpdateMode(0);//$port == 50006 ? 0 : 1); // @REVERT
+            $this->UpdateMode($port == 50006 ? 0 : 1);
             $this->Connect();
         } else {
             $this->UpdateMode(0);
@@ -303,8 +303,6 @@ class CantonSmartSpeakerDevice extends IPSModule
                         // if streaming is started while device is off, and on a non-streaming input there is no power or input packages received...
                         // we just get the JSON
                         if($state == 'play') {
-                            $this->SendDebug('Validating input', 'Checking...', 0);
-                            
                             if($this->ValidateInput(1)) {
                                 return '';
                             }
@@ -329,7 +327,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $value = ord($data[7]);
                         $this->SetValue('Input', $value);
                         if($this->GetMode() == 0 && ($value == INPUT_NET || $value == INPUT_BT)) {
-                            //$this->UpdateMode(1); @REVERT
+                            $this->UpdateMode(1);
                             return '';
                         }
                     // volume
@@ -508,10 +506,15 @@ class CantonSmartSpeakerDevice extends IPSModule
     }
 
     private function ValidateInput() {
-        // @REVERT
-        return false;
         $this->SendDebug('Validating input', 'Checking...', 0);
-        $input = $this->FetchInput();
+        
+        $input = false;
+        $cnt = 0;
+        while($cnt++ < 3) {
+            $input = $this->FetchInput();
+            if($input !== false) break;
+        }
+
         if($input != false) {
             if($this->GetMode() === 1) {
                 if(!($input == INPUT_NET || $input == INPUT_BT)) {
@@ -536,7 +539,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $parentID = $this->GetConnectionID();
         $host = IPS_GetProperty($parentID, 'Host');
         $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 2, "usec" => 0));
+        socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 1, "usec" => 0));
         $res = socket_connect($sock, $host, 50006);
         if(!$res) {
             $this->SendDebug('Fetch input', 'Failed to connect', 0);
@@ -550,10 +553,12 @@ class CantonSmartSpeakerDevice extends IPSModule
         $buffer = '';
         while($cnt++ < 5) {
             $bytes = socket_recv($sock, $frag, 1024, 0);
-            if(!$bytes) break;
+            if(!$bytes) {
+                break;
+            }
             $buffer .= $frag;
 
-            $this->SendDebug('Fetch input', bin2hex($buffer), 0);
+            $this->SendDebug('Fetch input debug', bin2hex($buffer), 0);
         
             while(strlen($buffer) >= 10) {
                 $property = unpack('n', $buffer, 2)[1];
