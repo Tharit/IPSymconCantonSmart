@@ -550,7 +550,11 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         IPS_Sleep(100);
         $data = $this->MakePacket(0x03, 0x02);
-        socket_send($sock, $data, strlen($data), 0);
+        $res = socket_send($sock, $data, strlen($data), 0);
+        if($res != strlen($data)) {
+            $this->SendDebug('Fetch input', 'Failed to send (' . $res . ')', 0);
+            return false;
+        }
         
         $cnt = 0;
         $buffer = '';
