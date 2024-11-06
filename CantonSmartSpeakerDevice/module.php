@@ -570,7 +570,7 @@ class CantonSmartSpeakerDevice extends IPSModule
 
             $this->SendDebug('Fetch input debug', bin2hex($buffer), 0);
         
-            while($buffer[0] == '{') {
+            while(strlen($buffer) > 0 && $buffer[0] == '{') {
                 $res = $this->parseJSON($buffer);
                 if(!$res) {
                     $this->SendDebug('Fetch input debug', 'Detected incomplete json, waiting...', 0);
