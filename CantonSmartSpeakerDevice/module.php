@@ -371,6 +371,8 @@ class CantonSmartSpeakerDevice extends IPSModule
                 $cmd = unpack('n', $data, 3)[1];
                 $len = unpack('n', $data, 8)[1];
 
+                $this->SendDebug('Received CMD', $cmd . "|" . $type, 0);
+
                 // after login or on device status notification
                 if(($cmd == 3 && $type == 2) || ($cmd == 112 && $type == 2)) {
                     $data2 = "\x00\x00\x01\x70\x00\x00\x00\x00\x00\x00";
