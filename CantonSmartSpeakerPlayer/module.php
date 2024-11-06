@@ -214,6 +214,16 @@ class CantonSmartSpeakerPlayer extends IPSModule
         $this->MUSetBuffer('Data', $data);
     }
 
+    public function RequestAction($ident, $value)
+    {
+        if($ident === 'Volume') {
+            if($value < 0 || $value > 100) return;
+            $data = "\x00\x00\x02\x40\x00\x00\x0\x00\x02\x00$value";
+            $this->SendDebug('Sending Data', bin2hex($data), 0);
+            CSCK_SendText($this->GetConnectionID(), $data);
+        }
+    }
+
     //------------------------------------------------------------------------------------
     // external methods
     //------------------------------------------------------------------------------------
