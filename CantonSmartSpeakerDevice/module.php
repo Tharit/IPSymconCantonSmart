@@ -248,52 +248,35 @@ class CantonSmartSpeakerDevice extends IPSModule
     }
 
     private function UpdateMetaData($json) {
-/*        $powerState = $json['PowerStatus'] == 'ON';
-        $this->SetValue('PowerState', $powerState);
-        $this->SetValue('Volume', $json['Volume']);
-*/
-        if($this->GetValue("Input") == INPUT_NET) {
-            $state = 'stop';
-            if($json['PlayState'] == 0) $state = 'play';
-            if($json['PlayState'] == 2) $state = 'pause';
-            $this->SetValue('State', $state);
-            
-            $app = $source = 'N/A';
-            if($json['Current Source'] == 1) {
-                $app = $source = 'Airplay';
-            } else if($json['Current Source'] == 4) {
-                $app = $source = 'Spotify';
-            } else if($json['Current Source'] == 24) {
-                $source = 'Google Cast';
-                $app = $json['CastContentApp'];
-            }
-            $this->SetValue('Source', $source);
-            $this->SetValue('Application', $app);
-            $this->SetValue('Position', 0);
-            $this->SetValue('Album', dashDefault($json['Album']));
-            $this->SetValue('Artist', dashDefault($json['Artist']));
-            $this->SetValue('Title', dashDefault($json['TrackName']));
-
-            $cover = $json['CoverArtUrl'];
-            if($cover === 'coverart.jpg') {
-                $parentID = $this->GetConnectionID();
-                $cover = 'http://'. IPS_GetProperty($parentID, 'Host') . '/coverart.jpg?' . time();
-            }
-
-            $this->SetValue('Cover', $cover);
-            $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+        $state = 'stop';
+        if($json['PlayState'] == 0) $state = 'play';
+        if($json['PlayState'] == 2) $state = 'pause';
+        $this->SetValue('State', $state);
+        
+        $app = $source = 'N/A';
+        if($json['Current Source'] == 1) {
+            $app = $source = 'Airplay';
+        } else if($json['Current Source'] == 4) {
+            $app = $source = 'Spotify';
+        } else if($json['Current Source'] == 24) {
+            $source = 'Google Cast';
+            $app = $json['CastContentApp'];
         }
-        /* else {
-            $this->SetValue('State', 'stop');
-            $this->SetValue("Application", "-");
-            $this->SetValue("Position", 0);
-            $this->SetValue("Album", '-');
-            $this->SetValue("Artist", '-');
-            $this->SetValue("Title", '-');
-            $this->SetValue("Cover", "");
-            $this->SetValue("Duration", 0);
+        $this->SetValue('Source', $source);
+        $this->SetValue('Application', $app);
+        $this->SetValue('Position', 0);
+        $this->SetValue('Album', dashDefault($json['Album']));
+        $this->SetValue('Artist', dashDefault($json['Artist']));
+        $this->SetValue('Title', dashDefault($json['TrackName']));
+
+        $cover = $json['CoverArtUrl'];
+        if($cover === 'coverart.jpg') {
+            $parentID = $this->GetConnectionID();
+            $cover = 'http://'. IPS_GetProperty($parentID, 'Host') . '/coverart.jpg?' . time();
         }
-        */
+
+        $this->SetValue('Cover', $cover);
+        $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
     }
 
     public function ReceiveDataDevice($data) {
@@ -333,8 +316,6 @@ class CantonSmartSpeakerDevice extends IPSModule
                                 }
                             }
                         }
-
-                        //$this->UpdateMetaData($json);
                     }
                 }
                 $data = '';
@@ -394,32 +375,9 @@ class CantonSmartSpeakerDevice extends IPSModule
                     $json = @json_decode($data2, true);
                     if($json && $json['Title'] == 'PlayView') {
                         $json = $json['Window CONTENTS'];
-                        /*
-                        $state = 'stop';
-                        if($json['PlayStatus'] == 'PLAY') $state = 'play';
-                        if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
 
-                        if($json['InputSource'] == 'NONE') {
-                            $this->UpdateMode(0);
-                            return '';
-                        } else if($state != 'play') {
-                            $this->SendDebug('Validating input', 'Checking...', 0);
-                            
-                            $input = $this->FetchInput();
-                            if($input != false) {
-                                if(!($input == INPUT_NET || $input == INPUT_BT)) {
-                                    $this->UpdateMode(0);
-                                    return '';
-                                }
-                                if($input != $this->GetValue("Input")) {
-                                    $this->SetValue("Input", $input);
-                                }
-                            }
-                        }
-*/
                         $this->SendDebug('Processing JSON Value', $data2, 0);
                         
-
                         $this->UpdateMetaData($json);
                     }
                 // playback status
@@ -429,6 +387,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SetValue('State', 'play');
                     } else if(ord($data2) == 0x31) {
                         $this->SetValue('State', 'stop');
+                        $this->ClearMetadata();
                     } else if(ord($data2) == 0x32) {
                         $this->SetValue('State', 'pause');
                     }
@@ -639,10 +598,7 @@ class CantonSmartSpeakerDevice extends IPSModule
     //------------------------------------------------------------------------------------
     // module internals
     //------------------------------------------------------------------------------------
-    private function ResetState() {
-        $this->MUSetBuffer('Data', '');
-        $this->MUSetBuffer('SkipData', false);
-
+    private function ClearMetadata() {
         $this->SetValue("Artist", '-');
         $this->SetValue("Album", '-');
         $this->SetValue("Title", '-');
@@ -652,5 +608,12 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->SetValue("Duration", 0);
         $this->SetValue("Position", 0);
         $this->SetValue('State', 'stop');
+    }
+
+    private function ResetState() {
+        $this->MUSetBuffer('Data', '');
+        $this->MUSetBuffer('SkipData', false);
+
+        $this->ClearMetadata();
     }
 }
