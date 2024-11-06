@@ -305,15 +305,8 @@ class CantonSmartSpeakerDevice extends IPSModule
                         if($state == 'play') {
                             $this->SendDebug('Validating input', 'Checking...', 0);
                             
-                            $input = $this->FetchInput();
-                            if($input != false) {
-                                if($input == INPUT_NET || $input == INPUT_BT) {
-                                    $this->UpdateMode(1);
-                                    return '';
-                                }
-                                if($input != $this->GetValue("Input")) {
-                                    $this->SetValue("Input", $input);
-                                }
+                            if($this->ValidateInput(1)) {
+                                return '';
                             }
                         }
                     }
@@ -379,6 +372,11 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SendDebug('Processing JSON Value', $data2, 0);
                         
                         $this->UpdateMetaData($json);
+                        
+                        // switch from BT input to NET input...
+                        if($this->GetValue("Input") !== INPUT_NET) {
+                            $this->SetValue("Input", INPUT_NET);
+                        }
                     }
                 // playback status
                 } else if($cmd == 51 && $type == 2) {
@@ -400,19 +398,13 @@ class CantonSmartSpeakerDevice extends IPSModule
                     $data2 = substr($data, 10, $len);
                     $this->SetValue('Volume', $data2);
                 // input
-                } else if($cmd == 70 && $type == 2 && $len > 0) {
+                } else if($cmd == 70 && $type == 2) {
                     $data2 = substr($data, 10, $len);
-                    if(strpos($data2, 'SPEAKER_INACTIVE') === 0) {
-                        $this->SendDebug('Validating input', 'Checking...', 0);
-                        $input = $this->FetchInput();
-                        if($input != false) {
-                            if(!($input == INPUT_NET || $input == INPUT_BT)) {
-                                $this->UpdateMode(0);
-                                return '';
-                            }
-                            if($input != $this->GetValue("Input")) {
-                                $this->SetValue("Input", $input);
-                            }
+                    if(($len > 0 && strpos($data2, 'SPEAKER_INACTIVE') === 0) ||
+                        ($len == 0 && $this->GetValue('State') == 'stop')
+                     ) {
+                        if($this->ValidateInput()) {
+                            return '';
                         }
                     }
                 }
@@ -508,6 +500,28 @@ class CantonSmartSpeakerDevice extends IPSModule
             CSCK_SendText($this->GetConnectionID(), $data);
         }
         
+    }
+
+    private function ValidateInput() {
+        $this->SendDebug('Validating input', 'Checking...', 0);
+        $input = $this->FetchInput();
+        if($input != false) {
+            if($this->GetMode() === 1) {
+                if(!($input == INPUT_NET || $input == INPUT_BT)) {
+                    $this->UpdateMode(0);
+                    return true;
+                }
+            } else {
+                if($input == INPUT_NET || $input == INPUT_BT) {
+                    $this->UpdateMode(1);
+                    return true;
+                }
+            }
+            if($input != $this->GetValue("Input")) {
+                $this->SetValue("Input", $input);
+            }
+        }
+        return false;
     }
 
     private function FetchInput() {
