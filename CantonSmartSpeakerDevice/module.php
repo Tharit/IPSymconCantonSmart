@@ -513,6 +513,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         while($cnt++ < 3) {
             $input = $this->FetchInput();
             if($input !== false) break;
+            IPS_Sleep(500);
         }
 
         if($input != false) {
