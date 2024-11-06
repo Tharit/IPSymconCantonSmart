@@ -440,6 +440,22 @@ class CantonSmartSpeakerDevice extends IPSModule
                 } else if($cmd == 64 && $type == 2) {
                     $data2 = substr($data, 10, $len);
                     $this->SetValue('Volume', $data2);
+                // input
+                } else if($cmd == 70 && $type == 2 && $len > 0) {
+                    $data2 = substr($data, 10, $len);
+                    if(strpos($data2, 'SPEAKER_INACTIVE') === 0) {
+                        $this->SendDebug('Validating input', 'Checking...', 0);
+                        $input = $this->FetchInput();
+                        if($input != false) {
+                            if(!($input == INPUT_NET || $input == INPUT_BT)) {
+                                $this->UpdateMode(0);
+                                return '';
+                            }
+                            if($input != $this->GetValue("Input")) {
+                                $this->SetValue("Input", $input);
+                            }
+                        }
+                    }
                 }
 
                 $data = substr($data, 10 + $len);
