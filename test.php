@@ -1,6 +1,14 @@
 <?php
 echo null || 0;
 
+$string = file_get_contents('./test.json');
+
+$pos = strpos($string, '}');
+
+var_dump($pos);
+
+exit;
+
 /*
 var_dump(json_decode("{\"a\":5}\n"));
 

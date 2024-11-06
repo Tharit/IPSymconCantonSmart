@@ -290,9 +290,10 @@ class CantonSmartSpeakerDevice extends IPSModule
 
             // JSON
             if($data[0] == '{') {
-                $json = @json_decode($data, true);
-                if($json) {
-                    $this->SendDebug('Processing JSON Packet', $data, 0);
+                $res = $this->parseJSON($data);
+                if($res) {
+                    $json = $res['json'];
+                    $this->SendDebug('Processing JSON Packet', json_encode($json), 0);
                     if($json['Title'] == 'DeviceStatusUpdate') {
                         $json = $json['CONTENTS'];
 
@@ -308,8 +309,8 @@ class CantonSmartSpeakerDevice extends IPSModule
                             }
                         }
                     }
+                    $data = substr($data, $res['length']);
                 }
-                $data = '';
             // binary
             } else if(strlen($data) >= 7 && ord($data[0]) == 0xff && ord($data[1]) == 0xaa) {
                 // ff   aa   00   03   01   00   03
@@ -555,12 +556,19 @@ class CantonSmartSpeakerDevice extends IPSModule
         while($cnt++ < 5) {
             $bytes = socket_recv($sock, $frag, 1024, 0);
             if(!$bytes) {
+                $this->SendDebug('Fetch input debug', 'Received nothing', 0);
                 break;
             }
             $buffer .= $frag;
 
             $this->SendDebug('Fetch input debug', bin2hex($buffer), 0);
         
+            if($buffer[0] == '{') {
+                $res = $this->parseJSON($data);
+                if(!$res) continue;
+                $buffer = substr($buffer, $res['length']);
+            }
+
             while(strlen($buffer) >= 10) {
                 $property = unpack('n', $buffer, 2)[1];
                 if($property == 0x03) break 2;
@@ -642,5 +650,23 @@ class CantonSmartSpeakerDevice extends IPSModule
         $this->MUSetBuffer('SkipData', false);
 
         $this->ClearMetadata();
+    }
+
+    private function parseJSON($string) {
+        $start = 0;
+        $offset = 0;
+        $json = null;
+    
+        do {
+            $pos = strpos($string, '}', $offset);
+            if($pos === false) break;
+            $json = @json_decode(substr($string, $start, $pos + 1), true);
+            $offset = $pos + 1;
+        } while(!$json && $offset <= strlen($string));
+    
+        return [
+            "json" => $json,
+            "length" => $offset
+        ];
     }
 }
