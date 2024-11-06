@@ -542,6 +542,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $cnt = 0;
         $buffer = '';
         while($cnt++ < 5) {
+            IPS_Sleep(100);
             $bytes = socket_recv($sock, $frag, 1024, 0);
             if(!$bytes) break;
             $buffer .= $frag;
