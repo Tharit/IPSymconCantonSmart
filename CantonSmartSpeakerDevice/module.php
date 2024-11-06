@@ -376,6 +376,11 @@ class CantonSmartSpeakerDevice extends IPSModule
                     $data2 = substr($data, 10, $len);
                     if(ord($data2) == 0x30) {
                         $this->SetValue('State', 'play');
+                        if(!$this->GetValue("PowerState")) {
+                            if($this->ValidateState()) {
+                                return '';
+                            }
+                        }
                     } else if(ord($data2) == 0x31) {
                         $this->SetValue('State', 'stop');
                         $this->ClearMetadata();
@@ -390,7 +395,13 @@ class CantonSmartSpeakerDevice extends IPSModule
                 // playback position
                 } else if($cmd == 49 && $type == 2) {
                     $data2 = substr($data, 10, $len);
-                    $this->SetValue('Position', floor($data2 / 1000));
+                    $position = floor($data2 / 1000);
+                    $this->SetValue('Position', $position);
+                    if(!($position % 10) && !$this->GetValue("PowerState")) {
+                        if($this->ValidateState()) {
+                            return '';
+                        }
+                    }
                 // volume
                 } else if($cmd == 64 && $type == 2) {
                     $data2 = substr($data, 10, $len);
