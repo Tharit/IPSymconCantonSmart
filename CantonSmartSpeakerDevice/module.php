@@ -559,7 +559,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                 $this->SendDebug('Fetch input debug', 'Received nothing, waiting...', 0);
                 IPS_Sleep(100);
                 $cnt++;
-                break;
+                continue;
             }
             $buffer .= $frag;
 
