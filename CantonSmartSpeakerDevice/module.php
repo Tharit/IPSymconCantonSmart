@@ -263,7 +263,15 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SetValue('Album', dashDefault($json['Album']));
             $this->SetValue('Artist', dashDefault($json['Artist']));
             $this->SetValue('Title', dashDefault($json['TrackName']));
-            $this->SetValue('Cover', $json['coverArtUrl']);
+
+            $cover = $json['coverArtUrl'];
+            
+            if($cover === 'coverart.jpg') {
+                $parentID = $this->GetConnectionID();
+                $cover = IPS_GetProperty($parentID, 'Host') . '/coverart.jpg';
+            }
+
+            $this->SetValue('Cover', $cover);
             $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
         } else {
             $this->SetValue('State', 'stop');
