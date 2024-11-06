@@ -296,18 +296,10 @@ class CantonSmartSpeakerDevice extends IPSModule
                     $this->SendDebug('Processing JSON Packet', json_encode($json), 0);
                     if($json['Title'] == 'DeviceStatusUpdate') {
                         $json = $json['CONTENTS'];
-
-                        $state = 'stop';
-                        if($json['PlayStatus'] == 'PLAY') $state = 'play';
-                        if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
-
-                        // if streaming is started while device is off, and on a non-streaming input there is no power or input packages received...
-                        // we just get the JSON
-                        if($state == 'play') {
-                            if($this->ValidateInput(1)) {
-                                return '';
-                            }
-                        }
+                        /**
+                            nothing to do here.. we handle the streaming metadata on the other connection
+                            streaming state sometimes "lags behind" anyway.. e.g. it might be "playing" still after switching to another input
+                         */
                     }
                     $data = substr($data, $res['length']);
                 }
