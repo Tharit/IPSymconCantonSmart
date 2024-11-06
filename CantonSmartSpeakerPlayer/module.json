@@ -1,0 +1,15 @@
+{
+	"id": "{DA273440-9C6F-11EF-BE8C-0800200C9A66}",
+	"name": "CantonSmartSpeakerPlayer",
+	"type": 3,
+	"vendor": "Canton",
+	"aliases": 
+	[
+		"Canton Speaker Streaming Media Player"
+	],
+	"parentRequirements": ["{79827379-F36E-4ADA-8A95-5F8D1DC92FA9}"],
+	"childRequirements": [],
+	"implemented": ["{018EF6B5-AB94-40C6-AA53-46943E824ACF}"],
+	"prefix": "CantonSmart",
+    "url": "https://github.com/tharit/IPSymconCantonSmart"
+}
