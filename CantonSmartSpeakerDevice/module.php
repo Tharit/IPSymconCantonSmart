@@ -565,17 +565,23 @@ class CantonSmartSpeakerDevice extends IPSModule
 
             $this->SendDebug('Fetch input debug', bin2hex($buffer), 0);
         
-            if($buffer[0] == '{') {
+            while($buffer[0] == '{') {
                 $res = $this->parseJSON($data);
                 if(!$res) continue;
                 $this->SendDebug('Fetch input debug', 'Detected json, skipping...', 0);
-                $buffer = substr($buffer, $res['length']);
+                $length = $res['length'];
+                if($buffer[$length] === "\n") $length++;
+                $buffer = substr($buffer, $length);
+
+                $this->SendDebug('Fetch input debug', bin2hex($buffer), 0);
             }
 
             while(strlen($buffer) >= 10) {
                 $property = unpack('n', $buffer, 2)[1];
                 if($property == 0x03) break 2;
                 if(strlen($buffer) > 10) $buffer = substr($buffer, 10);
+
+                $this->SendDebug('Fetch input debug', bin2hex($buffer), 0);
             }
         }
 
