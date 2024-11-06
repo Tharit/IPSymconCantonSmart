@@ -7,7 +7,7 @@ function dashDefault($value) {
     return '-';
 }
 
-class CantonSmartSpeakerDevice extends IPSModule
+class CantonSmartSpeakerPlayer extends IPSModule
 {
     use ModuleUtilities;
     
