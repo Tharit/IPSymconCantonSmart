@@ -254,18 +254,27 @@ class CantonSmartSpeakerDevice extends IPSModule
 */
         if($this->GetValue("Input") == INPUT_NET) {
             $state = 'stop';
-            if($json['PlayStatus'] == 'PLAY') $state = 'play';
-            if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
-
+            if($json['PlayState'] == 0) $state = 'play';
+            if($json['PlayState'] == 2) $state = 'pause';
             $this->SetValue('State', $state);
-            $this->SetValue('Application', dashDefault(strpos($json['coverArtUrl'], 'scdn.co') == false ? '' : 'Spotify'));
+            
+            $app = $source = 'N/A';
+            if($json['Current Source'] == 1) {
+                $app = $source = 'Airplay';
+            } else if($json['Current Source'] == 4) {
+                $app = $source = 'Spotify';
+            } else if($json['Current Source'] == 24) {
+                $source = 'Google Cast';
+                $app = $json['CastContentApp'];
+            }
+            $this->SetValue('Source', $source);
+            $this->SetValue('Application', $app);
             $this->SetValue('Position', 0);
             $this->SetValue('Album', dashDefault($json['Album']));
             $this->SetValue('Artist', dashDefault($json['Artist']));
             $this->SetValue('Title', dashDefault($json['TrackName']));
 
-            $cover = $json['coverArtUrl'];
-            
+            $cover = $json['CoverArtUrl'];
             if($cover === 'coverart.jpg') {
                 $parentID = $this->GetConnectionID();
                 $cover = IPS_GetProperty($parentID, 'Host') . '/coverart.jpg';
