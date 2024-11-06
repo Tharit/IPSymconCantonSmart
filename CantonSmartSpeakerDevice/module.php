@@ -276,7 +276,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         }
 
         $this->SetValue('Cover', $cover);
-        $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
+        $this->SetValue('Duration', ceil($json['TotalTime'] / 1000));
     }
 
     public function ReceiveDataDevice($data) {
@@ -675,7 +675,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         } while(!$json && $offset <= strlen($string));
     
         if(!$json) return null;
-        
+
         return [
             "json" => $json,
             "length" => $offset
