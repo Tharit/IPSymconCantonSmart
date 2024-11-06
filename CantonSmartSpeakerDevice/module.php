@@ -378,7 +378,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                         $this->SetValue('State', 'stop');
                         $this->ClearMetadata();
                         if($this->GetValue("Input") === INPUT_BT) {
-                            if($this->ValidateInput()) {
+                            if($this->ValidateState()) {
                                 return '';
                             }
                         }
@@ -399,7 +399,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                     if(($len > 0 && strpos($data2, 'SPEAKER_INACTIVE') === 0) ||
                         ($len == 0 && $this->GetValue('State') == 'stop')
                      ) {
-                        if($this->ValidateInput()) {
+                        if($this->ValidateState()) {
                             return '';
                         }
                     }
@@ -498,13 +498,13 @@ class CantonSmartSpeakerDevice extends IPSModule
         
     }
 
-    private function ValidateInput() {
+    private function ValidateState() {
         $this->SendDebug('Validating input', 'Checking...', 0);
         
         $input = false;
         $cnt = 0;
         while($cnt++ < 3) {
-            $input = $this->FetchInput();
+            $input = $this->FetchState();
             if($input !== false) break;
             IPS_Sleep(500);
         }
@@ -528,7 +528,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         return false;
     }
 
-    private function FetchInput() {
+    private function FetchState() {
         // check input is still correct
         $parentID = $this->GetConnectionID();
         $host = IPS_GetProperty($parentID, 'Host');
@@ -541,13 +541,16 @@ class CantonSmartSpeakerDevice extends IPSModule
         }
 
         IPS_Sleep(100);
-        $data = $this->MakePacket(0x03, 0x02);
+        $data = $this->MakePacket(0x03, 0x02) . $this->MakePacket(0x06, 0x02);
         $res = socket_send($sock, $data, strlen($data), 0);
         if($res != strlen($data)) {
             $this->SendDebug('Fetch input', 'Failed to send (' . $res . ')', 0);
             return false;
         }
         
+        $input = false;
+        $power = false;
+
         $cnt = 0;
         $buffer = '';
         while($cnt < 5) {
@@ -578,7 +581,13 @@ class CantonSmartSpeakerDevice extends IPSModule
 
             while(strlen($buffer) >= 10) {
                 $property = unpack('n', $buffer, 2)[1];
-                if($property == 0x03) break 2;
+                if($property == 0x03) {
+                    $input = ord($buffer[7]);
+                }
+                if($property == 0x06) {
+                    $power = ord($buffer[7]);
+                }
+                if($input !== false && $power !== false) break 2;
                 if(strlen($buffer) > 10) $buffer = substr($buffer, 10);
 
                 $this->SendDebug('Fetch input debug', bin2hex($buffer), 0);
@@ -587,9 +596,8 @@ class CantonSmartSpeakerDevice extends IPSModule
 
         socket_close($sock);
 
-        if(strlen($buffer) >= 10) {
-            $value = ord($buffer[7]);
-            return $value;
+        if($input !== false && $power !== false) {
+            return $input;
         } else {
             $this->SendDebug('Fetch input', 'Failed to receive response', 0);
         }
