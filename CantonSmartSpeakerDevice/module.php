@@ -248,11 +248,11 @@ class CantonSmartSpeakerDevice extends IPSModule
     }
 
     private function UpdateMetaData($json) {
-        $powerState = $json['PowerStatus'] == 'ON';
+/*        $powerState = $json['PowerStatus'] == 'ON';
         $this->SetValue('PowerState', $powerState);
         $this->SetValue('Volume', $json['Volume']);
-
-        if($this->GetValue("Input") == INPUT_NET && $powerState) {
+*/
+        if($this->GetValue("Input") == INPUT_NET) {
             $state = 'stop';
             if($json['PlayStatus'] == 'PLAY') $state = 'play';
             if($json['PlayStatus'] == 'PAUSE') $state = 'pause';
@@ -273,7 +273,8 @@ class CantonSmartSpeakerDevice extends IPSModule
 
             $this->SetValue('Cover', $cover);
             $this->SetValue('Duration', ceil($json['DurationInMilliseconds'] / 1000));
-        } else {
+        }
+        /* else {
             $this->SetValue('State', 'stop');
             $this->SetValue("Application", "-");
             $this->SetValue("Position", 0);
@@ -283,6 +284,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $this->SetValue("Cover", "");
             $this->SetValue("Duration", 0);
         }
+        */
     }
 
     public function ReceiveDataDevice($data) {
@@ -323,7 +325,7 @@ class CantonSmartSpeakerDevice extends IPSModule
                             }
                         }
 
-                        $this->UpdateMetaData($json);
+                        //$this->UpdateMetaData($json);
                     }
                 }
                 $data = '';
@@ -425,7 +427,12 @@ class CantonSmartSpeakerDevice extends IPSModule
                 } else if($cmd == 49 && $type == 2) {
                     $data2 = substr($data, 10, $len);
                     $this->SetValue('Position', floor($data2 / 1000));
+                // volume
+                } else if($cmd == 64 && $type == 2) {
+                    $data2 = substr($data, 10, $len);
+                    $this->SetValue('Volume', $data2);
                 }
+
                 $data = substr($data, 10 + $len);
             } else {
                 break;
