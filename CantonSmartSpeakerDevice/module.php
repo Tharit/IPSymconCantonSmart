@@ -533,7 +533,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $parentID = $this->GetConnectionID();
         $host = IPS_GetProperty($parentID, 'Host');
         $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 1, "usec" => 0));
+        socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 15, "usec" => 0));
         $res = socket_connect($sock, $host, 50006);
         if(!$res) {
             $this->SendDebug('Fetch input', 'Failed to connect', 0);
