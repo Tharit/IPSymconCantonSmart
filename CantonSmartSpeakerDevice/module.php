@@ -602,6 +602,10 @@ class CantonSmartSpeakerDevice extends IPSModule
         socket_close($sock);
 
         if($input !== false && $power !== false) {
+            $this->SetValue('PowerState', $power);
+            if(!$power) {
+                $this->ClearMetadata();
+            }
             return $input;
         } else {
             $this->SendDebug('Fetch input', 'Failed to receive response', 0);
