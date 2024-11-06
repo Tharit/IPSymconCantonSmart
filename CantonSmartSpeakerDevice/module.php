@@ -674,6 +674,8 @@ class CantonSmartSpeakerDevice extends IPSModule
             $offset = $pos + 1;
         } while(!$json && $offset <= strlen($string));
     
+        if(!$json) return null;
+        
         return [
             "json" => $json,
             "length" => $offset
