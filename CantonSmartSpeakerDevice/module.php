@@ -157,6 +157,8 @@ class CantonSmartSpeakerDevice extends IPSModule
                     if($json['Title'] == 'DeviceStatusUpdate') {
                         $json = $json['CONTENTS'];
                         
+                        $this->SetValue('PowerState', $json['PowerStatus'] === 'ON');
+
                         if($json['PlayStatus'] === 'PLAY') {
                             // validate input
                             $input = $this->GetValue('Input');
