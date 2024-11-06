@@ -386,6 +386,11 @@ class CantonSmartSpeakerDevice extends IPSModule
                     } else if(ord($data2) == 0x31) {
                         $this->SetValue('State', 'stop');
                         $this->ClearMetadata();
+                        if($this->GetValue("Input") === INPUT_BT) {
+                            if($this->ValidateInput()) {
+                                return '';
+                            }
+                        }
                     } else if(ord($data2) == 0x32) {
                         $this->SetValue('State', 'pause');
                     }
@@ -529,7 +534,7 @@ class CantonSmartSpeakerDevice extends IPSModule
         $parentID = $this->GetConnectionID();
         $host = IPS_GetProperty($parentID, 'Host');
         $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 1, "usec" => 0));
+        socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 2, "usec" => 0));
         $res = socket_connect($sock, $host, 50006);
         if(!$res) {
             $this->SendDebug('Fetch input', 'Failed to connect', 0);
@@ -542,7 +547,6 @@ class CantonSmartSpeakerDevice extends IPSModule
         $cnt = 0;
         $buffer = '';
         while($cnt++ < 5) {
-            IPS_Sleep(100);
             $bytes = socket_recv($sock, $frag, 1024, 0);
             if(!$bytes) break;
             $buffer .= $frag;
