@@ -277,7 +277,7 @@ class CantonSmartSpeakerDevice extends IPSModule
             $cover = $json['CoverArtUrl'];
             if($cover === 'coverart.jpg') {
                 $parentID = $this->GetConnectionID();
-                $cover = 'http://'. IPS_GetProperty($parentID, 'Host') . '/coverart.jpg';
+                $cover = 'http://'. IPS_GetProperty($parentID, 'Host') . '/coverart.jpg#' . time();
             }
 
             $this->SetValue('Cover', $cover);
